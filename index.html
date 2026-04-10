@@ -685,13 +685,38 @@ function renderWriterCards(f,from,to) {
   const grid=document.getElementById('writerGrid');grid.innerHTML='';
   WS.map(slug=>{
     const wp=f.filter(p=>p.a.includes(slug)),nw=wp.filter(p=>classify(p,from,to)==='new').length,up=wp.filter(p=>classify(p,from,to)==='updated').length;
-    const at=ALL_POSTS.filter(p=>p.a.includes(slug)).length;
+    const allPosts=ALL_POSTS.filter(p=>p.a.includes(slug)).sort((a,b)=>(b.u||b.d).localeCompare(a.u||a.d));
     const dates=wp.flatMap(p=>[p.d,p.u].filter(Boolean)).sort().reverse();
-    return{slug,wp,nw,up,at,la:dates[0]||'N/A'};
-  }).sort((a,b)=>b.wp.length-a.wp.length).forEach(({slug,wp,nw,up,at,la})=>{
-    const card=document.createElement('div');card.className='writer-card';card.style.borderLeft=`4px solid ${wColor(slug)}`;
-    card.innerHTML=`<div class="name">${wName(slug)}</div><div class="role" style="color:${wColor(slug)}">Last active: ${fmtD(la)}</div><div class="metrics"><div class="metric"><div class="mv">${wp.length}</div><div class="ml">Period</div></div><div class="metric"><div class="mv">${at}</div><div class="ml">All-time</div></div><div class="metric"><div class="mv" style="color:var(--green)">${nw}</div><div class="ml">New</div></div><div class="metric"><div class="mv" style="color:var(--cyan)">${up}</div><div class="ml">Updates</div></div></div>`;
-    card.addEventListener('click',()=>{document.getElementById('writerFilter').value=slug;document.querySelectorAll('.tab')[0].click();refresh();});
+    return{slug,wp,nw,up,at:allPosts.length,allPosts,la:dates[0]||'N/A'};
+  }).sort((a,b)=>b.wp.length-a.wp.length).forEach(({slug,wp,nw,up,at,allPosts,la})=>{
+    const cardId='wc-'+slug.replace(/[^a-z0-9]/g,'');
+    const card=document.createElement('div');card.className='writer-card';card.style.borderLeft=`4px solid ${wColor(slug)}`;card.style.cursor='default';
+    card.innerHTML=`
+      <div class="name">${wName(slug)}</div>
+      <div class="role" style="color:${wColor(slug)}">Last active: ${fmtD(la)}</div>
+      <div class="metrics">
+        <div class="metric"><div class="mv">${wp.length}</div><div class="ml">Period</div></div>
+        <div class="metric"><div class="mv">${at}</div><div class="ml">All-time</div></div>
+        <div class="metric"><div class="mv" style="color:${cv('--green')}">${nw}</div><div class="ml">New</div></div>
+        <div class="metric"><div class="mv" style="color:${cv('--cyan')}">${up}</div><div class="ml">Updates</div></div>
+      </div>
+      <div style="margin-top:14px">
+        <button class="btn btn-outline" style="width:100%;font-size:12px;padding:8px" onclick="document.getElementById('${cardId}').classList.toggle('hidden');this.textContent=this.textContent.includes('Show')?'Hide All ${at} Blogs':'Show All ${at} Blogs'">Show All ${at} Blogs</button>
+      </div>
+      <div id="${cardId}" class="hidden" style="margin-top:12px;max-height:400px;overflow-y:auto;border-top:1px solid var(--surface2);padding-top:8px">
+        <table style="font-size:12px;width:100%">
+          <thead><tr>
+            <th style="padding:6px 8px;font-size:10px;cursor:default">Title</th>
+            <th style="padding:6px 8px;font-size:10px;width:90px;cursor:default">Published</th>
+            <th style="padding:6px 8px;font-size:10px;width:90px;cursor:default">Updated</th>
+          </tr></thead>
+          <tbody>${allPosts.map(p=>`<tr>
+            <td style="padding:5px 8px;border-top:1px solid var(--surface2)"><a href="https://www.vantagecircle.com/en/blog/${p.s}/" target="_blank" style="color:${cv('--accent2')};text-decoration:none;font-size:12px">${esc(p.t||p.s)}</a></td>
+            <td style="padding:5px 8px;border-top:1px solid var(--surface2);white-space:nowrap;font-size:11px;color:${cv('--text2')}">${fmtD(p.d)}</td>
+            <td style="padding:5px 8px;border-top:1px solid var(--surface2);white-space:nowrap;font-size:11px;color:${cv('--cyan')}">${fmtD(p.u)}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>`;
     grid.appendChild(card);
   });
 }
