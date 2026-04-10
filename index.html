@@ -13,13 +13,24 @@
     --accent2: #818cf8; --green: #22c55e; --orange: #f59e0b;
     --red: #ef4444; --cyan: #06b6d4; --pink: #ec4899;
   }
+  [data-theme="light"] {
+    --bg: #f8fafc; --surface: #ffffff; --surface2: #e2e8f0;
+    --text: #0f172a; --text2: #64748b; --accent: #6366f1;
+    --accent2: #4f46e5; --green: #16a34a; --orange: #d97706;
+    --red: #dc2626; --cyan: #0891b2; --pink: #db2777;
+  }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.3s, color 0.3s; }
 
   .header { background: linear-gradient(135deg, #312e81, #1e1b4b); padding: 24px 32px; border-bottom: 1px solid var(--surface2); display: flex; justify-content: space-between; align-items: center; }
-  .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
-  .header p { color: var(--text2); font-size: 13px; margin-top: 4px; }
-  .header .last-updated { color: var(--text2); font-size: 12px; text-align: right; }
+  [data-theme="light"] .header { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+  .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; color: #fff; }
+  .header p { color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 4px; }
+  .header .right { display: flex; align-items: center; gap: 16px; }
+  .header .last-updated { color: rgba(255,255,255,0.6); font-size: 12px; text-align: right; }
+  .header .last-updated strong { color: rgba(255,255,255,0.9); }
+  .theme-toggle { background: rgba(255,255,255,0.15); border: none; color: #fff; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+  .theme-toggle:hover { background: rgba(255,255,255,0.25); }
 
   .controls { display: flex; gap: 12px; padding: 16px 32px; background: var(--surface); border-bottom: 1px solid var(--surface2); flex-wrap: wrap; align-items: center; }
   .controls label { color: var(--text2); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -34,7 +45,7 @@
 
   .dashboard { padding: 24px 32px; display: flex; flex-direction: column; gap: 24px; }
 
-  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; }
   .stat-card { background: var(--surface); border-radius: 10px; padding: 20px; border: 1px solid var(--surface2); }
   .stat-card .label { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
   .stat-card .value { font-size: 32px; font-weight: 700; margin-top: 4px; }
@@ -47,18 +58,21 @@
   .chart-card canvas { max-height: 320px; }
   .chart-card.full { grid-column: 1 / -1; }
 
-  .table-card { background: var(--surface); border-radius: 10px; border: 1px solid var(--surface2); overflow: hidden; }
-  .table-card h3 { font-size: 14px; font-weight: 600; padding: 16px 20px; color: var(--text2); border-bottom: 1px solid var(--surface2); display: flex; justify-content: space-between; align-items: center; }
+  .card { background: var(--surface); border-radius: 10px; border: 1px solid var(--surface2); overflow: hidden; }
+  .card h3 { font-size: 14px; font-weight: 600; padding: 16px 20px; color: var(--text2); border-bottom: 1px solid var(--surface2); display: flex; justify-content: space-between; align-items: center; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th { text-align: left; padding: 10px 16px; background: var(--bg); color: var(--text2); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; position: sticky; top: 0; cursor: pointer; user-select: none; }
+  th { text-align: left; padding: 10px 16px; background: var(--bg); color: var(--text2); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; position: sticky; top: 0; cursor: pointer; user-select: none; z-index: 1; }
   th:hover { color: var(--accent2); }
   td { padding: 10px 16px; border-top: 1px solid var(--surface2); }
   tr:hover td { background: rgba(99,102,241,0.05); }
-  .table-scroll { max-height: 500px; overflow-y: auto; }
+  .table-scroll { max-height: 560px; overflow-y: auto; }
 
   .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
   .badge-new { background: rgba(34,197,94,0.15); color: var(--green); }
   .badge-updated { background: rgba(6,182,212,0.15); color: var(--cyan); }
+  .badge-stale { background: rgba(239,68,68,0.15); color: var(--red); }
+  .badge-idle { background: rgba(245,158,11,0.15); color: var(--orange); }
+  .badge-ok { background: rgba(34,197,94,0.15); color: var(--green); }
 
   .writer-summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
   .writer-card { background: var(--surface); border-radius: 10px; padding: 20px; border: 1px solid var(--surface2); transition: border-color 0.2s; cursor: pointer; }
@@ -83,9 +97,7 @@
   .sort-arrow { font-size: 10px; margin-left: 4px; }
 
   /* Activity Feed */
-  .feed-container { background: var(--surface); border-radius: 10px; border: 1px solid var(--surface2); overflow: hidden; }
-  .feed-container h3 { font-size: 14px; font-weight: 600; padding: 16px 20px; color: var(--text2); border-bottom: 1px solid var(--surface2); }
-  .feed-scroll { max-height: 600px; overflow-y: auto; padding: 0; }
+  .feed-scroll { max-height: 600px; overflow-y: auto; }
   .feed-date-group { border-bottom: 1px solid var(--surface2); }
   .feed-date-header { padding: 12px 20px 8px; font-size: 13px; font-weight: 700; color: var(--accent2); background: var(--bg); position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 8px; }
   .feed-date-header .feed-count { background: var(--accent); color: #fff; font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 600; }
@@ -101,29 +113,59 @@
   .feed-title:hover { text-decoration: underline; }
   .feed-tags { font-size: 11px; color: var(--surface2); margin-top: 2px; }
 
-  /* Calendar Heatmap */
+  /* Heatmap */
   .heatmap-container { background: var(--surface); border-radius: 10px; border: 1px solid var(--surface2); padding: 20px; overflow-x: auto; }
   .heatmap-container h3 { font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--text2); }
-  .heatmap-wrap { display: flex; gap: 24px; }
   .heatmap-grid { display: flex; gap: 3px; }
   .heatmap-week { display: flex; flex-direction: column; gap: 3px; }
-  .heatmap-cell { width: 14px; height: 14px; border-radius: 3px; cursor: pointer; transition: outline 0.15s; position: relative; }
+  .heatmap-cell { width: 14px; height: 14px; border-radius: 3px; cursor: pointer; transition: outline 0.15s; }
   .heatmap-cell:hover { outline: 2px solid var(--accent2); outline-offset: 1px; }
   .heatmap-legend { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text2); margin-top: 12px; }
   .heatmap-legend-cell { width: 14px; height: 14px; border-radius: 3px; }
-  .heatmap-months { display: flex; font-size: 10px; color: var(--text2); margin-bottom: 4px; }
-  .heatmap-days { display: flex; flex-direction: column; gap: 3px; font-size: 10px; color: var(--text2); margin-right: 4px; justify-content: space-between; padding: 0; }
+  .heatmap-days { display: flex; flex-direction: column; gap: 3px; font-size: 10px; color: var(--text2); margin-right: 4px; }
   .heatmap-days span { height: 14px; display: flex; align-items: center; }
 
   /* Tooltip */
-  .tooltip { position: fixed; background: var(--bg); border: 1px solid var(--surface2); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--text); pointer-events: none; z-index: 100; max-width: 320px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+  .tooltip { position: fixed; background: var(--bg); border: 1px solid var(--surface2); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--text); pointer-events: none; z-index: 100; max-width: 340px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
   .tooltip .tip-date { font-weight: 700; color: var(--accent2); margin-bottom: 4px; }
   .tooltip .tip-item { padding: 2px 0; color: var(--text2); }
   .tooltip .tip-item strong { color: var(--text); }
 
-  /* Overview two-column layout for feed + charts */
-  .overview-main { display: grid; grid-template-columns: 1fr 380px; gap: 24px; }
-  @media (max-width: 1200px) { .overview-main { grid-template-columns: 1fr; } }
+  /* Leaderboard */
+  .rank-num { font-size: 18px; font-weight: 800; color: var(--accent); min-width: 28px; text-align: center; }
+  .rank-1 { color: #fbbf24; }
+  .rank-2 { color: #94a3b8; }
+  .rank-3 { color: #cd7f32; }
+  .streak-bar { height: 6px; border-radius: 3px; background: var(--surface2); overflow: hidden; margin-top: 4px; }
+  .streak-fill { height: 100%; border-radius: 3px; }
+  .trend-up { color: var(--green); }
+  .trend-down { color: var(--red); }
+  .trend-flat { color: var(--text2); }
+
+  /* Alerts */
+  .alert-card { background: var(--surface); border-radius: 10px; padding: 16px 20px; border: 1px solid var(--surface2); display: flex; align-items: flex-start; gap: 12px; }
+  .alert-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+  .alert-body { flex: 1; }
+  .alert-body .alert-title { font-size: 13px; font-weight: 700; }
+  .alert-body .alert-desc { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .alerts-grid { display: flex; flex-direction: column; gap: 12px; }
+  .alerts-section { margin-bottom: 20px; }
+  .alerts-section h4 { font-size: 13px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--surface2); }
+
+  /* Tag Matrix */
+  .matrix-table { font-size: 12px; }
+  .matrix-table th, .matrix-table td { padding: 8px 10px; text-align: center; }
+  .matrix-table th:first-child, .matrix-table td:first-child { text-align: left; }
+  .matrix-cell { border-radius: 4px; min-width: 36px; display: inline-block; padding: 2px 6px; font-weight: 600; font-size: 11px; }
+
+  /* Compare */
+  .compare-controls { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end; }
+  .compare-grid { display: grid; gap: 24px; }
+  .compare-writer { background: var(--surface); border-radius: 10px; padding: 20px; border: 1px solid var(--surface2); }
+  .compare-writer .cw-name { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+  .compare-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .compare-stat .csv { font-size: 24px; font-weight: 700; }
+  .compare-stat .csl { font-size: 11px; color: var(--text2); text-transform: uppercase; }
 </style>
 </head>
 <body>
@@ -133,17 +175,22 @@
     <h1>Content Writer Activity Tracker</h1>
     <p>Vantage Circle Blog — <span id="postCount">0</span> posts tracked across <span id="writerCount">0</span> writers</p>
   </div>
-  <div class="last-updated">
-    Data refreshed<br><strong id="refreshDate">-</strong>
+  <div class="right">
+    <button class="theme-toggle" id="themeToggle" title="Toggle theme">&#9790;</button>
+    <div class="last-updated">Data refreshed<br><strong id="refreshDate">-</strong></div>
   </div>
 </div>
 
 <div class="tabs">
   <div class="tab active" data-tab="overview">Overview</div>
+  <div class="tab" data-tab="leaderboard">Leaderboard</div>
+  <div class="tab" data-tab="alerts">Alerts</div>
   <div class="tab" data-tab="activity">Activity Feed</div>
-  <div class="tab" data-tab="calendar">Activity Calendar</div>
+  <div class="tab" data-tab="calendar">Calendar</div>
   <div class="tab" data-tab="writers">Writer Cards</div>
-  <div class="tab" data-tab="timeline">Publishing Timeline</div>
+  <div class="tab" data-tab="tags">Tag Coverage</div>
+  <div class="tab" data-tab="compare">Compare</div>
+  <div class="tab" data-tab="timeline">Timeline</div>
   <div class="tab" data-tab="posts">All Posts</div>
 </div>
 
@@ -160,19 +207,11 @@
       <option value="custom">Custom</option>
     </select>
   </div>
-  <div class="filter-group hidden" id="customDateGroup">
-    <label>From</label>
-    <input type="date" id="dateFrom">
-  </div>
-  <div class="filter-group hidden" id="customDateGroup2">
-    <label>To</label>
-    <input type="date" id="dateTo">
-  </div>
+  <div class="filter-group hidden" id="customDateGroup"><label>From</label><input type="date" id="dateFrom"></div>
+  <div class="filter-group hidden" id="customDateGroup2"><label>To</label><input type="date" id="dateTo"></div>
   <div class="filter-group">
     <label>Writer</label>
-    <select id="writerFilter">
-      <option value="all">All Writers</option>
-    </select>
+    <select id="writerFilter"><option value="all">All Writers</option></select>
   </div>
   <div class="filter-group">
     <label>Activity</label>
@@ -189,75 +228,45 @@
 </div>
 
 <div class="dashboard">
-  <!-- Tab: Overview -->
   <div id="tab-overview">
     <div class="stats-row" id="statsRow"></div>
     <div class="chart-grid">
       <div class="chart-card"><h3>Posts by Writer</h3><canvas id="chartPostsByWriter"></canvas></div>
-      <div class="chart-card"><h3>New vs Updated (Selected Period)</h3><canvas id="chartNewVsUpdated"></canvas></div>
+      <div class="chart-card"><h3>New vs Updated</h3><canvas id="chartNewVsUpdated"></canvas></div>
       <div class="chart-card full"><h3>Monthly Activity Trend</h3><canvas id="chartMonthlyTrend"></canvas></div>
       <div class="chart-card"><h3>Tag Distribution (Top 10)</h3><canvas id="chartTags"></canvas></div>
       <div class="chart-card"><h3>Writer Activity Share</h3><canvas id="chartWriterShare"></canvas></div>
     </div>
   </div>
 
-  <!-- Tab: Activity Feed -->
-  <div id="tab-activity" class="hidden">
-    <div class="feed-container">
-      <h3>Activity Feed — Date-wise Publishing & Update Log</h3>
-      <div class="feed-scroll" id="activityFeed"></div>
-    </div>
-  </div>
-
-  <!-- Tab: Activity Calendar -->
-  <div id="tab-calendar" class="hidden">
-    <div class="heatmap-container">
-      <h3>Activity Calendar (Last 12 Months)</h3>
-      <div id="heatmapArea"></div>
-    </div>
-  </div>
-
-  <!-- Tab: Writer Cards -->
-  <div id="tab-writers" class="hidden">
-    <div class="writer-summary-grid" id="writerGrid"></div>
-  </div>
-
-  <!-- Tab: Timeline -->
-  <div id="tab-timeline" class="hidden">
-    <div class="chart-card"><h3>Weekly Publishing Timeline by Writer</h3><canvas id="chartWeeklyTimeline" style="max-height:500px"></canvas></div>
-  </div>
-
-  <!-- Tab: All Posts -->
+  <div id="tab-leaderboard" class="hidden"><div class="card"><h3>Writer Leaderboard</h3><div class="table-scroll" id="leaderboardBody"></div></div></div>
+  <div id="tab-alerts" class="hidden"><div id="alertsBody"></div></div>
+  <div id="tab-activity" class="hidden"><div class="card"><h3>Activity Feed — Date-wise Log</h3><div class="feed-scroll" id="activityFeed"></div></div></div>
+  <div id="tab-calendar" class="hidden"><div class="heatmap-container"><h3>Activity Calendar</h3><div id="heatmapArea"></div></div></div>
+  <div id="tab-writers" class="hidden"><div class="writer-summary-grid" id="writerGrid"></div></div>
+  <div id="tab-tags" class="hidden"><div class="card"><h3>Tag Coverage Matrix — Who Writes What</h3><div class="table-scroll" id="tagMatrixBody"></div></div></div>
+  <div id="tab-compare" class="hidden"><div id="compareBody"></div></div>
+  <div id="tab-timeline" class="hidden"><div class="chart-card"><h3>Weekly Publishing Timeline</h3><canvas id="chartWeeklyTimeline" style="max-height:500px"></canvas></div></div>
   <div id="tab-posts" class="hidden">
-    <div class="table-card">
-      <h3>
-        <span>Post Activity Log (<span id="tableCount">0</span> posts)</span>
-        <input type="text" class="search-box" id="postSearch" placeholder="Search title, author, or tag...">
-      </h3>
+    <div class="card">
+      <h3><span>All Posts (<span id="tableCount">0</span>)</span><input type="text" class="search-box" id="postSearch" placeholder="Search title, author, or tag..."></h3>
       <div class="table-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th data-sort="title">Title <span class="sort-arrow"></span></th>
-              <th data-sort="author">Author <span class="sort-arrow"></span></th>
-              <th data-sort="date">Published <span class="sort-arrow"></span></th>
-              <th data-sort="updated">Last Updated <span class="sort-arrow"></span></th>
-              <th data-sort="type">Type <span class="sort-arrow"></span></th>
-              <th data-sort="tags">Tags <span class="sort-arrow"></span></th>
-            </tr>
-          </thead>
-          <tbody id="postsTableBody"></tbody>
-        </table>
+        <table><thead><tr>
+          <th data-sort="title">Title <span class="sort-arrow"></span></th>
+          <th data-sort="author">Author <span class="sort-arrow"></span></th>
+          <th data-sort="date">Published <span class="sort-arrow"></span></th>
+          <th data-sort="updated">Updated <span class="sort-arrow"></span></th>
+          <th data-sort="type">Type <span class="sort-arrow"></span></th>
+          <th data-sort="tags">Tags <span class="sort-arrow"></span></th>
+        </tr></thead><tbody id="postsTableBody"></tbody></table>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Tooltip element -->
 <div class="tooltip hidden" id="tooltip"></div>
 
 <script>
-// ===== WRITER CONFIG =====
 const TRACKED_WRITERS = {
   'mrinmoy-rabha': { name: 'Mrinmoy Rabha', color: '#6366f1' },
   'lupamudra-deori': { name: 'Lopamudra Deori', color: '#ec4899' },
@@ -269,641 +278,511 @@ const TRACKED_WRITERS = {
   'shikha-gogoi': { name: 'Shikha Gogoi', color: '#14b8a6' },
   'nilotpal-m-saharia': { name: 'Nilotpal M Saharia', color: '#f97316' },
 };
-const WRITER_SLUGS = Object.keys(TRACKED_WRITERS);
-
+const WS = Object.keys(TRACKED_WRITERS);
 let ALL_POSTS = typeof EMBEDDED_DATA !== 'undefined' ? EMBEDDED_DATA : [];
 let charts = {};
+const ALL_TABS = ['overview','leaderboard','alerts','activity','calendar','writers','tags','compare','timeline','posts'];
 
-// ===== HELPERS =====
-const escHtml = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function fmtD(ds) { if(!ds) return '-'; return new Date(ds+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}); }
+function fmtDL(ds) { if(!ds) return ''; return new Date(ds+'T00:00:00').toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }
+function wName(s) { return TRACKED_WRITERS[s]?TRACKED_WRITERS[s].name:s.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()); }
+function wColor(s) { return TRACKED_WRITERS[s]?TRACKED_WRITERS[s].color:'#64748b'; }
+function daysDiff(d1,d2) { return Math.round((d2-d1)/(864e5)); }
 
-function fmtDate(dateStr) {
-  if (!dateStr) return '-';
-  const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+// Theme
+function initTheme() {
+  const saved = localStorage.getItem('vc-theme');
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+  document.getElementById('themeToggle').textContent = (saved === 'light') ? '\u2600' : '\u263E';
 }
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('vc-theme', next);
+  document.getElementById('themeToggle').textContent = next === 'light' ? '\u2600' : '\u263E';
+});
 
-function fmtDateLong(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-}
-
-function daysBetween(d1, d2) {
-  return Math.round((d2 - d1) / (1000*60*60*24));
-}
-
-function getWriterName(slug) {
-  return TRACKED_WRITERS[slug] ? TRACKED_WRITERS[slug].name : slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-}
-
-function getWriterColor(slug) {
-  return TRACKED_WRITERS[slug] ? TRACKED_WRITERS[slug].color : '#64748b';
-}
-
-// ===== INIT =====
+// Init
 document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
   document.getElementById('postCount').textContent = ALL_POSTS.length;
-  document.getElementById('writerCount').textContent = WRITER_SLUGS.length;
-  document.getElementById('refreshDate').textContent = fmtDate(new Date().toISOString().slice(0,10));
-  populateWriterFilter();
+  document.getElementById('writerCount').textContent = WS.length;
+  document.getElementById('refreshDate').textContent = fmtD(new Date().toISOString().slice(0,10));
+  const sel = document.getElementById('writerFilter');
+  WS.slice().sort((a,b)=>wName(a).localeCompare(wName(b))).forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=wName(s);sel.appendChild(o);});
   bindEvents();
   refresh();
 });
 
-function populateWriterFilter() {
-  const sel = document.getElementById('writerFilter');
-  WRITER_SLUGS.slice().sort((a,b) => TRACKED_WRITERS[a].name.localeCompare(TRACKED_WRITERS[b].name)).forEach(slug => {
-    const opt = document.createElement('option');
-    opt.value = slug;
-    opt.textContent = TRACKED_WRITERS[slug].name;
-    sel.appendChild(opt);
-  });
-}
-
 function bindEvents() {
   document.getElementById('timeRange').addEventListener('change', onTimeChange);
-  document.getElementById('writerFilter').addEventListener('change', refresh);
-  document.getElementById('activityFilter').addEventListener('change', refresh);
-  document.getElementById('dateFrom').addEventListener('change', refresh);
-  document.getElementById('dateTo').addEventListener('change', refresh);
+  ['writerFilter','activityFilter'].forEach(id=>document.getElementById(id).addEventListener('change',refresh));
+  ['dateFrom','dateTo'].forEach(id=>document.getElementById(id).addEventListener('change',refresh));
   document.getElementById('postSearch').addEventListener('input', renderPostsTable);
-
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
       tab.classList.add('active');
-      ['overview','activity','calendar','writers','timeline','posts'].forEach(id => {
-        document.getElementById('tab-' + id).classList.toggle('hidden', id !== tab.dataset.tab);
-      });
-      if (tab.dataset.tab === 'timeline') renderTimeline();
-      if (tab.dataset.tab === 'posts') renderPostsTable();
-      if (tab.dataset.tab === 'activity') renderActivityFeed();
-      if (tab.dataset.tab === 'calendar') renderCalendar();
+      ALL_TABS.forEach(id=>document.getElementById('tab-'+id).classList.toggle('hidden',id!==tab.dataset.tab));
+      renderActiveTab(tab.dataset.tab);
     });
   });
-
-  document.querySelectorAll('th[data-sort]').forEach(th => {
-    th.addEventListener('click', () => sortTable(th.dataset.sort));
-  });
+  document.querySelectorAll('th[data-sort]').forEach(th=>th.addEventListener('click',()=>sortTable(th.dataset.sort)));
 }
 
 function onTimeChange() {
-  const v = document.getElementById('timeRange').value;
-  document.getElementById('customDateGroup').classList.toggle('hidden', v !== 'custom');
-  document.getElementById('customDateGroup2').classList.toggle('hidden', v !== 'custom');
-  if (v !== 'custom') refresh();
+  const v=document.getElementById('timeRange').value;
+  document.getElementById('customDateGroup').classList.toggle('hidden',v!=='custom');
+  document.getElementById('customDateGroup2').classList.toggle('hidden',v!=='custom');
+  if(v!=='custom') refresh();
 }
 
-// ===== FILTERING =====
+function renderActiveTab(tab) {
+  if(tab==='posts') renderPostsTable();
+  if(tab==='activity') renderActivityFeed();
+  if(tab==='calendar') renderCalendar();
+  if(tab==='timeline') renderTimeline();
+  if(tab==='leaderboard') renderLeaderboard();
+  if(tab==='alerts') renderAlerts();
+  if(tab==='tags') renderTagMatrix();
+  if(tab==='compare') renderCompare();
+}
+
+// Filtering
 function getDateRange() {
-  const v = document.getElementById('timeRange').value;
-  const now = new Date();
-  let from, to = now;
-  if (v === 'custom') {
-    from = document.getElementById('dateFrom').value ? new Date(document.getElementById('dateFrom').value) : new Date('2000-01-01');
-    to = document.getElementById('dateTo').value ? new Date(document.getElementById('dateTo').value) : now;
-  } else if (v === '0') {
-    from = new Date('2000-01-01');
-  } else {
-    from = new Date(now); from.setDate(from.getDate() - parseInt(v));
-  }
-  return { from, to };
+  const v=document.getElementById('timeRange').value, now=new Date();
+  let from,to=now;
+  if(v==='custom'){from=document.getElementById('dateFrom').value?new Date(document.getElementById('dateFrom').value):new Date('2000-01-01');to=document.getElementById('dateTo').value?new Date(document.getElementById('dateTo').value):now;}
+  else if(v==='0'){from=new Date('2000-01-01');}
+  else{from=new Date(now);from.setDate(from.getDate()-parseInt(v));}
+  return{from,to};
 }
 
-function getFilteredPosts() {
-  const { from, to } = getDateRange();
-  const writer = document.getElementById('writerFilter').value;
-  const activity = document.getElementById('activityFilter').value;
-
-  return ALL_POSTS.filter(p => {
-    const isTracked = p.a.some(a => WRITER_SLUGS.includes(a));
-    if (!isTracked) return false;
-    if (writer !== 'all' && !p.a.includes(writer)) return false;
-
-    const created = new Date(p.d);
-    const updated = p.u ? new Date(p.u) : null;
-    const inRangeCreated = created >= from && created <= to;
-    const inRangeUpdated = updated && updated >= from && updated <= to;
-
-    if (activity === 'new') return inRangeCreated;
-    if (activity === 'updated') return inRangeUpdated && !inRangeCreated;
-    return inRangeCreated || inRangeUpdated;
+function getFiltered() {
+  const{from,to}=getDateRange(),w=document.getElementById('writerFilter').value,act=document.getElementById('activityFilter').value;
+  return ALL_POSTS.filter(p=>{
+    if(!p.a.some(a=>WS.includes(a)))return false;
+    if(w!=='all'&&!p.a.includes(w))return false;
+    const c=new Date(p.d),u=p.u?new Date(p.u):null,ic=c>=from&&c<=to,iu=u&&u>=from&&u<=to;
+    if(act==='new')return ic;if(act==='updated')return iu&&!ic;return ic||iu;
   });
 }
 
-function classifyPost(p, from, to) {
-  const created = new Date(p.d);
-  const updated = p.u ? new Date(p.u) : null;
-  if (created >= from && created <= to) return 'new';
-  if (updated && updated >= from && updated <= to) return 'updated';
-  return 'other';
+function classify(p,from,to) {
+  const c=new Date(p.d),u=p.u?new Date(p.u):null;
+  if(c>=from&&c<=to)return'new';if(u&&u>=from&&u<=to)return'updated';return'other';
 }
 
 function refresh() {
-  const filtered = getFilteredPosts();
-  const { from, to } = getDateRange();
-  renderStats(filtered, from, to);
-  renderPostsByWriter(filtered);
-  renderNewVsUpdated(filtered, from, to);
-  renderMonthlyTrend(from, to);
-  renderTags(filtered);
-  renderWriterShare(filtered);
-  renderWriterCards(filtered, from, to);
-  // Render active tab content
-  const activeTab = document.querySelector('.tab.active');
-  if (activeTab) {
-    if (activeTab.dataset.tab === 'posts') renderPostsTable();
-    if (activeTab.dataset.tab === 'activity') renderActivityFeed();
-    if (activeTab.dataset.tab === 'calendar') renderCalendar();
-    if (activeTab.dataset.tab === 'timeline') renderTimeline();
-  }
+  const f=getFiltered(),{from,to}=getDateRange();
+  renderStats(f,from,to);renderPostsByWriter(f);renderNewVsUpdated(f,from,to);renderMonthlyTrend(from,to);renderTagsChart(f);renderWriterShare(f);renderWriterCards(f,from,to);
+  const at=document.querySelector('.tab.active');
+  if(at)renderActiveTab(at.dataset.tab);
 }
 
-// ===== STAT CARDS =====
-function renderStats(filtered, from, to) {
-  const newPosts = filtered.filter(p => classifyPost(p, from, to) === 'new');
-  const updatedPosts = filtered.filter(p => classifyPost(p, from, to) === 'updated');
-  const activeWriters = new Set(filtered.flatMap(p => p.a.filter(a => WRITER_SLUGS.includes(a)))).size;
-  const avgPerWriter = activeWriters > 0 ? (filtered.length / activeWriters).toFixed(1) : 0;
+// Stats
+function renderStats(f,from,to) {
+  const nw=f.filter(p=>classify(p,from,to)==='new'),up=f.filter(p=>classify(p,from,to)==='updated');
+  const aw=new Set(f.flatMap(p=>p.a.filter(a=>WS.includes(a)))).size;
+  const avg=aw>0?(f.length/aw).toFixed(1):0;
+  const wc={};f.forEach(p=>p.a.filter(a=>WS.includes(a)).forEach(a=>{wc[a]=(wc[a]||0)+1;}));
+  const tw=Object.entries(wc).sort((a,b)=>b[1]-a[1])[0];
+  const total=ALL_POSTS.length;
+  const allR=ALL_POSTS.filter(p=>{const c=new Date(p.d),u=p.u?new Date(p.u):null;return(c>=from&&c<=to)||(u&&u>=from&&u<=to);}).length;
+  const share=allR>0?((f.length/allR)*100).toFixed(1):0;
+  // New/Update ratio
+  const ratio = nw.length > 0 ? (nw.length / Math.max(1, up.length)).toFixed(1) : '0';
 
-  const writerCounts = {};
-  filtered.forEach(p => p.a.filter(a => WRITER_SLUGS.includes(a)).forEach(a => { writerCounts[a] = (writerCounts[a]||0) + 1; }));
-  const topWriter = Object.entries(writerCounts).sort((a,b) => b[1]-a[1])[0];
-
-  const allBlogTotal = ALL_POSTS.length;
-  const allInRange = ALL_POSTS.filter(p => {
-    const created = new Date(p.d);
-    const updated = p.u ? new Date(p.u) : null;
-    return (created >= from && created <= to) || (updated && updated >= from && updated <= to);
-  }).length;
-  const teamShare = allInRange > 0 ? ((filtered.length / allInRange) * 100).toFixed(1) : 0;
-
-  document.getElementById('statsRow').innerHTML = `
-    <div class="stat-card"><div class="label">Overall Blog Posts</div><div class="value" style="color:var(--orange)">${allInRange}</div><div class="sub">all authors in period (${allBlogTotal} all-time)</div></div>
-    <div class="stat-card"><div class="label">Team Activity</div><div class="value">${filtered.length}</div><div class="sub">${teamShare}% of total blog output</div></div>
-    <div class="stat-card"><div class="label">New Posts</div><div class="value" style="color:var(--green)">${newPosts.length}</div><div class="sub">first published</div></div>
-    <div class="stat-card"><div class="label">Content Updates</div><div class="value" style="color:var(--cyan)">${updatedPosts.length}</div><div class="sub">refreshed posts</div></div>
-    <div class="stat-card"><div class="label">Active Writers</div><div class="value">${activeWriters}</div><div class="sub">of ${WRITER_SLUGS.length} tracked</div></div>
-    <div class="stat-card"><div class="label">Avg Posts / Writer</div><div class="value">${avgPerWriter}</div><div class="sub">in this period</div></div>
-    <div class="stat-card"><div class="label">Most Active</div><div class="value" style="font-size:20px">${topWriter ? TRACKED_WRITERS[topWriter[0]].name : '-'}</div><div class="sub">${topWriter ? topWriter[1] + ' posts' : ''}</div></div>
+  document.getElementById('statsRow').innerHTML=`
+    <div class="stat-card"><div class="label">Overall Blog</div><div class="value" style="color:var(--orange)">${allR}</div><div class="sub">all authors in period (${total} all-time)</div></div>
+    <div class="stat-card"><div class="label">Team Activity</div><div class="value">${f.length}</div><div class="sub">${share}% of total output</div></div>
+    <div class="stat-card"><div class="label">New Posts</div><div class="value" style="color:var(--green)">${nw.length}</div><div class="sub">first published</div></div>
+    <div class="stat-card"><div class="label">Updates</div><div class="value" style="color:var(--cyan)">${up.length}</div><div class="sub">content refreshes</div></div>
+    <div class="stat-card"><div class="label">New:Update Ratio</div><div class="value">${ratio}</div><div class="sub">publish vs refresh balance</div></div>
+    <div class="stat-card"><div class="label">Active Writers</div><div class="value">${aw}</div><div class="sub">of ${WS.length} tracked</div></div>
+    <div class="stat-card"><div class="label">Avg / Writer</div><div class="value">${avg}</div><div class="sub">in this period</div></div>
+    <div class="stat-card"><div class="label">Most Active</div><div class="value" style="font-size:20px">${tw?wName(tw[0]):'-'}</div><div class="sub">${tw?tw[1]+' posts':''}</div></div>
   `;
 }
 
-// ===== ACTIVITY FEED =====
-function renderActivityFeed() {
-  const filtered = getFilteredPosts();
-  const { from, to } = getDateRange();
+// === LEADERBOARD ===
+function renderLeaderboard() {
+  const f=getFiltered(),{from,to}=getDateRange();
+  const now=new Date();
 
-  // Build events: each post can have a "published" event and/or an "updated" event
-  const events = [];
-  filtered.forEach(p => {
-    const authors = p.a.filter(a => WRITER_SLUGS.includes(a));
-    const created = new Date(p.d);
-    const updated = p.u ? new Date(p.u) : null;
+  const data = WS.map(slug => {
+    const posts = f.filter(p=>p.a.includes(slug));
+    const nw = posts.filter(p=>classify(p,from,to)==='new').length;
+    const up = posts.filter(p=>classify(p,from,to)==='updated').length;
+    const allTime = ALL_POSTS.filter(p=>p.a.includes(slug)).length;
 
-    if (created >= from && created <= to) {
-      events.push({ date: p.d, type: 'published', title: p.t, slug: p.s, authors, tags: p.tg || [] });
+    // Streak: consecutive weeks with activity (going backward from now)
+    let streak = 0;
+    const weekMs = 7*864e5;
+    let wEnd = new Date(to);
+    let wStart = new Date(wEnd); wStart.setDate(wStart.getDate()-7);
+    while(wStart >= from) {
+      const hasActivity = ALL_POSTS.some(p => {
+        if(!p.a.includes(slug)) return false;
+        const cd=new Date(p.d),ud=p.u?new Date(p.u):null;
+        return (cd>=wStart&&cd<wEnd)||(ud&&ud>=wStart&&ud<wEnd);
+      });
+      if(hasActivity) streak++; else break;
+      wEnd=new Date(wStart); wStart=new Date(wEnd); wStart.setDate(wStart.getDate()-7);
     }
-    if (updated && updated >= from && updated <= to && p.u !== p.d) {
-      events.push({ date: p.u, type: 'updated', title: p.t, slug: p.s, authors, tags: p.tg || [] });
-    }
-  });
 
-  // Sort by date descending
-  events.sort((a, b) => b.date.localeCompare(a.date));
+    // MoM trend
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonth = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+    const curCount = ALL_POSTS.filter(p=>p.a.includes(slug)&&(p.d.slice(0,7)===thisMonth.toISOString().slice(0,7)||(p.u&&p.u.slice(0,7)===thisMonth.toISOString().slice(0,7)))).length;
+    const prevCount = ALL_POSTS.filter(p=>p.a.includes(slug)&&(p.d.slice(0,7)===lastMonth.toISOString().slice(0,7)||(p.u&&p.u.slice(0,7)===lastMonth.toISOString().slice(0,7)))).length;
 
-  // Group by date
-  const groups = {};
-  events.forEach(e => {
-    if (!groups[e.date]) groups[e.date] = [];
-    groups[e.date].push(e);
-  });
+    // Last active
+    const dates = ALL_POSTS.filter(p=>p.a.includes(slug)).flatMap(p=>[p.d,p.u].filter(Boolean)).sort().reverse();
+    const lastActive = dates[0]||'';
+    const daysIdle = lastActive ? daysDiff(new Date(lastActive), now) : 999;
 
-  const dates = Object.keys(groups).sort().reverse();
-  const feed = document.getElementById('activityFeed');
+    return { slug, total: posts.length, nw, up, allTime, streak, curCount, prevCount, lastActive, daysIdle };
+  }).sort((a,b)=>b.total-a.total);
 
-  if (dates.length === 0) {
-    feed.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text2)">No activity found in the selected period.</div>';
-    return;
-  }
+  const maxStreak = Math.max(1,...data.map(d=>d.streak));
 
-  feed.innerHTML = dates.map(date => {
-    const items = groups[date];
-    const today = new Date().toISOString().slice(0,10);
-    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
-    let dateLabel = fmtDateLong(date);
-    if (date === today) dateLabel = 'Today — ' + dateLabel;
-    else if (date === yesterday) dateLabel = 'Yesterday — ' + dateLabel;
-
-    return `
-      <div class="feed-date-group">
-        <div class="feed-date-header">
-          ${dateLabel}
-          <span class="feed-count">${items.length} ${items.length === 1 ? 'activity' : 'activities'}</span>
-        </div>
-        ${items.map(e => {
-          const authorNames = e.authors.map(a => `<strong style="color:${getWriterColor(a)}">${getWriterName(a)}</strong>`).join(', ');
-          const actionVerb = e.type === 'published' ? 'published' : 'updated';
-          const tagStr = e.tags.length ? `<div class="feed-tags">${e.tags.map(t => t.replace(/-/g,' ')).join(' / ')}</div>` : '';
-          return `
-            <div class="feed-item">
-              <div class="feed-dot ${e.type === 'published' ? 'new' : 'updated'}"></div>
-              <div class="feed-content">
-                <div class="feed-action">${authorNames} <span style="color:${e.type === 'published' ? 'var(--green)' : 'var(--cyan)'}">${actionVerb}</span></div>
-                <a class="feed-title" href="https://www.vantagecircle.com/en/blog/${e.slug}/" target="_blank">${escHtml(e.title || e.slug)}</a>
-                ${tagStr}
-              </div>
-            </div>`;
-        }).join('')}
-      </div>`;
-  }).join('');
+  document.getElementById('leaderboardBody').innerHTML = `<table><thead><tr>
+    <th style="width:40px">#</th><th>Writer</th><th>Period Total</th><th>New</th><th>Updated</th>
+    <th>All-time</th><th>Streak (weeks)</th><th>MoM Trend</th><th>Last Active</th><th>Status</th>
+  </tr></thead><tbody>${data.map((d,i)=>{
+    const rankClass = i<3?`rank-${i+1}`:'';
+    const trendIcon = d.curCount>d.prevCount?'<span class="trend-up">&#9650;</span>':d.curCount<d.prevCount?'<span class="trend-down">&#9660;</span>':'<span class="trend-flat">&#9644;</span>';
+    const trendText = d.curCount>d.prevCount?`+${d.curCount-d.prevCount} vs last month`:d.curCount<d.prevCount?`${d.curCount-d.prevCount} vs last month`:'same as last month';
+    const status = d.daysIdle>30?'<span class="badge badge-idle">Idle</span>':'<span class="badge badge-ok">Active</span>';
+    return `<tr>
+      <td><span class="rank-num ${rankClass}">${i+1}</span></td>
+      <td><strong style="color:${wColor(d.slug)}">${wName(d.slug)}</strong></td>
+      <td><strong>${d.total}</strong></td>
+      <td style="color:var(--green)">${d.nw}</td>
+      <td style="color:var(--cyan)">${d.up}</td>
+      <td>${d.allTime}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><span>${d.streak}w</span><div class="streak-bar" style="width:80px"><div class="streak-fill" style="width:${(d.streak/maxStreak)*100}%;background:${wColor(d.slug)}"></div></div></div></td>
+      <td>${trendIcon} <span style="font-size:11px;color:var(--text2)">${trendText}</span></td>
+      <td>${fmtD(d.lastActive)}</td>
+      <td>${status}</td>
+    </tr>`;
+  }).join('')}</tbody></table>`;
 }
 
-// ===== ACTIVITY CALENDAR (Heatmap) =====
-function renderCalendar() {
-  const area = document.getElementById('heatmapArea');
-  const filtered = getFilteredPosts();
-  const { from, to } = getDateRange();
-
-  // Build a map of date -> events for tracked writers
-  const dateMap = {};
-  filtered.forEach(p => {
-    const authors = p.a.filter(a => WRITER_SLUGS.includes(a));
-    const created = new Date(p.d);
-    const updated = p.u ? new Date(p.u) : null;
-
-    if (created >= from && created <= to) {
-      if (!dateMap[p.d]) dateMap[p.d] = [];
-      dateMap[p.d].push({ type: 'published', title: p.t, slug: p.s, authors });
-    }
-    if (updated && updated >= from && updated <= to && p.u !== p.d) {
-      if (!dateMap[p.u]) dateMap[p.u] = [];
-      dateMap[p.u].push({ type: 'updated', title: p.t, slug: p.s, authors });
-    }
-  });
-
-  // Use last 12 months or the selected range (whichever is shorter)
+// === ALERTS ===
+function renderAlerts() {
   const now = new Date();
-  const calStart = new Date(Math.max(from.getTime(), new Date(now.getFullYear()-1, now.getMonth(), now.getDate()).getTime()));
-  const calEnd = new Date(Math.min(to.getTime(), now.getTime()));
+  const body = document.getElementById('alertsBody');
 
-  // Align to start of week (Sunday)
-  const start = new Date(calStart);
-  start.setDate(start.getDate() - start.getDay());
+  // Idle writers (no activity in 30+ days)
+  const idleWriters = WS.map(slug => {
+    const dates = ALL_POSTS.filter(p=>p.a.includes(slug)).flatMap(p=>[p.d,p.u].filter(Boolean)).sort().reverse();
+    const last = dates[0] ? new Date(dates[0]) : null;
+    const days = last ? daysDiff(last, now) : 999;
+    return { slug, last: dates[0], days };
+  }).filter(w=>w.days>=30).sort((a,b)=>b.days-a.days);
 
-  // Build weeks
-  const weeks = [];
-  const d = new Date(start);
-  while (d <= calEnd || weeks.length < 2) {
-    const week = [];
-    for (let i = 0; i < 7; i++) {
-      const ds = d.toISOString().slice(0,10);
-      const inRange = d >= calStart && d <= calEnd;
-      week.push({ date: ds, count: inRange ? (dateMap[ds] || []).length : -1, events: dateMap[ds] || [] });
-      d.setDate(d.getDate() + 1);
-    }
-    weeks.push(week);
-    if (d > calEnd) break;
-  }
+  // Stale posts (not updated in 12+ months, by tracked writers)
+  const stalePosts = ALL_POSTS.filter(p => {
+    if(!p.a.some(a=>WS.includes(a))) return false;
+    const lastDate = p.u || p.d;
+    return lastDate && daysDiff(new Date(lastDate), now) > 365;
+  }).sort((a,b) => (a.u||a.d).localeCompare(b.u||b.d));
 
-  // Max count for color scaling
-  const maxCount = Math.max(1, ...Object.values(dateMap).map(v => v.length));
-
-  function cellColor(count) {
-    if (count < 0) return 'var(--bg)';
-    if (count === 0) return 'var(--surface2)';
-    const intensity = Math.min(count / maxCount, 1);
-    if (intensity <= 0.25) return '#1e3a5f';
-    if (intensity <= 0.5) return '#1d4ed8';
-    if (intensity <= 0.75) return '#6366f1';
-    return '#a78bfa';
-  }
-
-  // Month labels
-  const monthLabels = [];
-  let lastMonth = -1;
-  weeks.forEach((week, i) => {
-    const firstDay = week.find(d => d.count >= 0);
-    if (firstDay) {
-      const m = new Date(firstDay.date).getMonth();
-      if (m !== lastMonth) {
-        monthLabels.push({ index: i, label: new Date(firstDay.date).toLocaleDateString('en-US', { month: 'short' }) });
-        lastMonth = m;
-      }
-    }
-  });
-
-  const tooltip = document.getElementById('tooltip');
-
-  area.innerHTML = `
-    <div style="margin-bottom: 8px; display: flex; gap: ${weeks.length > 30 ? 3 : 3}px; padding-left: 30px;">
-      ${monthLabels.map(m => `<span style="position:relative;left:${m.index * 17}px;font-size:10px;color:var(--text2);position:absolute;margin-left:${m.index*17}px">${m.label}</span>`).join('')}
-    </div>
-    <div style="display:flex;gap:4px;margin-top:24px;">
-      <div class="heatmap-days">
-        <span>&nbsp;</span><span>Mon</span><span>&nbsp;</span><span>Wed</span><span>&nbsp;</span><span>Fri</span><span>&nbsp;</span>
-      </div>
-      <div class="heatmap-grid">
-        ${weeks.map(week => `
-          <div class="heatmap-week">
-            ${week.map(day => `<div class="heatmap-cell" data-date="${day.date}" data-count="${day.count}" style="background:${cellColor(day.count)}"></div>`).join('')}
-          </div>
-        `).join('')}
+  body.innerHTML = `
+    <div class="alerts-section">
+      <h4>Writer Idle Alerts (30+ days inactive)</h4>
+      <div class="alerts-grid">
+        ${idleWriters.length === 0 ? '<div class="alert-card"><div class="alert-icon">&#10003;</div><div class="alert-body"><div class="alert-title" style="color:var(--green)">All writers active</div><div class="alert-desc">Everyone has been active in the last 30 days.</div></div></div>' :
+        idleWriters.map(w=>`
+          <div class="alert-card" style="border-left:3px solid ${wColor(w.slug)}">
+            <div class="alert-icon" style="color:var(--orange)">&#9888;</div>
+            <div class="alert-body">
+              <div class="alert-title" style="color:${wColor(w.slug)}">${wName(w.slug)}</div>
+              <div class="alert-desc">Inactive for <strong style="color:var(--orange)">${w.days} days</strong> — last activity on ${fmtD(w.last)}</div>
+            </div>
+          </div>`).join('')}
       </div>
     </div>
-    <div class="heatmap-legend" style="margin-top:16px;">
-      <span>Less</span>
-      <div class="heatmap-legend-cell" style="background:var(--surface2)"></div>
-      <div class="heatmap-legend-cell" style="background:#1e3a5f"></div>
-      <div class="heatmap-legend-cell" style="background:#1d4ed8"></div>
-      <div class="heatmap-legend-cell" style="background:#6366f1"></div>
-      <div class="heatmap-legend-cell" style="background:#a78bfa"></div>
-      <span>More</span>
-    </div>
-  `;
-
-  // Tooltip on hover
-  area.querySelectorAll('.heatmap-cell').forEach(cell => {
-    cell.addEventListener('mouseenter', (e) => {
-      const date = cell.dataset.date;
-      const count = parseInt(cell.dataset.count);
-      if (count < 0) return;
-
-      const events = dateMap[date] || [];
-      let html = `<div class="tip-date">${fmtDateLong(date)}</div>`;
-      if (events.length === 0) {
-        html += `<div class="tip-item" style="color:var(--text2)">No activity</div>`;
-      } else {
-        html += events.slice(0, 8).map(ev => {
-          const names = ev.authors.map(a => getWriterName(a)).join(', ');
-          const verb = ev.type === 'published' ? '<span style="color:var(--green)">published</span>' : '<span style="color:var(--cyan)">updated</span>';
-          return `<div class="tip-item"><strong>${names}</strong> ${verb} "${escHtml((ev.title||'').slice(0,50))}${(ev.title||'').length > 50 ? '...' : ''}"</div>`;
-        }).join('');
-        if (events.length > 8) html += `<div class="tip-item" style="color:var(--text2)">+${events.length - 8} more</div>`;
-      }
-
-      tooltip.innerHTML = html;
-      tooltip.classList.remove('hidden');
-      const rect = cell.getBoundingClientRect();
-      tooltip.style.left = (rect.left + 20) + 'px';
-      tooltip.style.top = (rect.bottom + 8) + 'px';
-    });
-
-    cell.addEventListener('mouseleave', () => {
-      tooltip.classList.add('hidden');
-    });
-  });
+    <div class="alerts-section">
+      <h4>Stale Content (not updated in 12+ months) — ${stalePosts.length} posts</h4>
+      <div class="card"><div class="table-scroll" style="max-height:400px"><table><thead><tr>
+        <th>Title</th><th>Author</th><th>Last Updated</th><th>Age</th>
+      </tr></thead><tbody>
+        ${stalePosts.slice(0,100).map(p=>{
+          const lastDate=p.u||p.d;
+          const age=daysDiff(new Date(lastDate),now);
+          const ageStr=age>730?Math.round(age/365)+'y':Math.round(age/30)+'mo';
+          return `<tr>
+            <td><a href="https://www.vantagecircle.com/en/blog/${p.s}/" target="_blank" style="color:var(--accent2);text-decoration:none">${esc(p.t||p.s)}</a></td>
+            <td>${p.a.filter(a=>WS.includes(a)).map(a=>`<span style="color:${wColor(a)}">${wName(a)}</span>`).join(', ')}</td>
+            <td>${fmtD(lastDate)}</td>
+            <td><span class="badge badge-stale">${ageStr} old</span></td>
+          </tr>`;
+        }).join('')}
+      </tbody></table></div></div>
+      ${stalePosts.length>100?`<p style="padding:12px;color:var(--text2);font-size:12px">Showing first 100 of ${stalePosts.length} stale posts.</p>`:''}
+    </div>`;
 }
 
-// ===== CHARTS =====
-function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
-
-function renderPostsByWriter(filtered) {
-  destroyChart('postsByWriter');
-  const counts = {};
-  WRITER_SLUGS.forEach(s => counts[s] = 0);
-  filtered.forEach(p => p.a.filter(a => WRITER_SLUGS.includes(a)).forEach(a => counts[a]++));
-  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
-
-  charts.postsByWriter = new Chart(document.getElementById('chartPostsByWriter'), {
-    type: 'bar',
-    data: {
-      labels: sorted.map(([s]) => TRACKED_WRITERS[s].name),
-      datasets: [{ data: sorted.map(([,v]) => v), backgroundColor: sorted.map(([s]) => TRACKED_WRITERS[s].color), borderRadius: 4 }]
-    },
-    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-      scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, y: { grid: { display: false }, ticks: { color: '#f1f5f9', font: { size: 11 } } } } }
-  });
-}
-
-function renderNewVsUpdated(filtered, from, to) {
-  destroyChart('newVsUpdated');
-  const writerNew = {}, writerUpd = {};
-  WRITER_SLUGS.forEach(s => { writerNew[s] = 0; writerUpd[s] = 0; });
-  filtered.forEach(p => {
-    const type = classifyPost(p, from, to);
-    p.a.filter(a => WRITER_SLUGS.includes(a)).forEach(a => {
-      if (type === 'new') writerNew[a]++;
-      else writerUpd[a]++;
-    });
-  });
-  const sorted = WRITER_SLUGS.slice().sort((a,b) => (writerNew[b]+writerUpd[b]) - (writerNew[a]+writerUpd[a]));
-
-  charts.newVsUpdated = new Chart(document.getElementById('chartNewVsUpdated'), {
-    type: 'bar',
-    data: {
-      labels: sorted.map(s => TRACKED_WRITERS[s].name),
-      datasets: [
-        { label: 'New', data: sorted.map(s => writerNew[s]), backgroundColor: '#22c55e', borderRadius: 4 },
-        { label: 'Updated', data: sorted.map(s => writerUpd[s]), backgroundColor: '#06b6d4', borderRadius: 4 },
-      ]
-    },
-    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 12 } } },
-      scales: { x: { stacked: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, y: { stacked: true, grid: { display: false }, ticks: { color: '#f1f5f9', font: { size: 11 } } } } }
-  });
-}
-
-function renderMonthlyTrend(from, to) {
-  destroyChart('monthlyTrend');
-  const months = [];
-  const d = new Date(from.getFullYear(), from.getMonth(), 1);
-  const end = new Date(to.getFullYear(), to.getMonth(), 1);
-  while (d <= end) { months.push(d.toISOString().slice(0,7)); d.setMonth(d.getMonth() + 1); }
-  if (months.length > 36) { const step = Math.ceil(months.length / 36); const s = months.filter((_,i) => i % step === 0); months.length = 0; months.push(...s); }
-
-  const datasets = WRITER_SLUGS.map(slug => {
-    const data = months.map(m => ALL_POSTS.filter(p => {
-      if (!p.a.includes(slug)) return false;
-      return p.d.slice(0,7) === m || (p.u && p.u.slice(0,7) === m);
-    }).length);
-    return { label: TRACKED_WRITERS[slug].name, data, borderColor: TRACKED_WRITERS[slug].color, backgroundColor: TRACKED_WRITERS[slug].color + '33', fill: false, tension: 0.3, pointRadius: 2 };
-  });
-
-  charts.monthlyTrend = new Chart(document.getElementById('chartMonthlyTrend'), {
-    type: 'line', data: { labels: months, datasets },
-    options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 12, font: { size: 11 } } } },
-      scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', maxRotation: 45, font: { size: 10 } } }, y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } } } }
-  });
-}
-
-function renderTags(filtered) {
-  destroyChart('tags');
+// === TAG MATRIX ===
+function renderTagMatrix() {
+  const f = getFiltered();
+  // Get top 15 tags
   const tagCounts = {};
-  filtered.forEach(p => (p.tg||[]).forEach(t => tagCounts[t] = (tagCounts[t]||0)+1));
-  const sorted = Object.entries(tagCounts).sort((a,b) => b[1]-a[1]).slice(0,10);
-  charts.tags = new Chart(document.getElementById('chartTags'), {
-    type: 'doughnut',
-    data: {
-      labels: sorted.map(([t]) => t.replace(/-/g,' ')),
-      datasets: [{ data: sorted.map(([,v]) => v), backgroundColor: ['#6366f1','#ec4899','#f59e0b','#22c55e','#06b6d4','#ef4444','#a855f7','#14b8a6','#f97316','#84cc16'] }]
-    },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12 } } } }
-  });
+  f.forEach(p=>(p.tg||[]).forEach(t=>tagCounts[t]=(tagCounts[t]||0)+1));
+  const topTags = Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]).slice(0,15).map(([t])=>t);
+
+  // Build matrix
+  const matrix = {};
+  WS.forEach(s=>{matrix[s]={};topTags.forEach(t=>matrix[s][t]=0);});
+  f.forEach(p=>p.a.filter(a=>WS.includes(a)).forEach(a=>(p.tg||[]).filter(t=>topTags.includes(t)).forEach(t=>matrix[a][t]++)));
+
+  const maxVal = Math.max(1,...WS.flatMap(s=>topTags.map(t=>matrix[s][t])));
+
+  function cellBg(v) {
+    if(v===0)return'transparent';
+    const pct=v/maxVal;
+    if(pct<=0.25)return'rgba(99,102,241,0.15)';if(pct<=0.5)return'rgba(99,102,241,0.3)';if(pct<=0.75)return'rgba(99,102,241,0.5)';return'rgba(99,102,241,0.7)';
+  }
+
+  document.getElementById('tagMatrixBody').innerHTML = `<table class="matrix-table"><thead><tr>
+    <th style="text-align:left">Writer</th>${topTags.map(t=>`<th style="max-width:90px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${t}">${t.replace(/-/g,' ')}</th>`).join('')}
+    <th>Total</th>
+  </tr></thead><tbody>
+    ${WS.map(s=>{
+      const rowTotal = topTags.reduce((sum,t)=>sum+matrix[s][t],0);
+      return `<tr>
+        <td style="text-align:left"><strong style="color:${wColor(s)}">${wName(s)}</strong></td>
+        ${topTags.map(t=>`<td><span class="matrix-cell" style="background:${cellBg(matrix[s][t])};color:${matrix[s][t]>0?'var(--text)':'var(--surface2)'}">${matrix[s][t]||'-'}</span></td>`).join('')}
+        <td><strong>${rowTotal}</strong></td>
+      </tr>`;
+    }).join('')}
+  </tbody></table>`;
 }
 
-function renderWriterShare(filtered) {
-  destroyChart('writerShare');
-  const counts = {};
-  WRITER_SLUGS.forEach(s => counts[s] = 0);
-  filtered.forEach(p => p.a.filter(a => WRITER_SLUGS.includes(a)).forEach(a => counts[a]++));
-  const sorted = Object.entries(counts).filter(([,v]) => v > 0).sort((a,b) => b[1]-a[1]);
-  charts.writerShare = new Chart(document.getElementById('chartWriterShare'), {
-    type: 'pie',
-    data: {
-      labels: sorted.map(([s]) => TRACKED_WRITERS[s].name),
-      datasets: [{ data: sorted.map(([,v]) => v), backgroundColor: sorted.map(([s]) => TRACKED_WRITERS[s].color) }]
-    },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12 } } } }
-  });
-}
+// === COMPARE ===
+function renderCompare() {
+  const body = document.getElementById('compareBody');
+  const f = getFiltered(), {from,to} = getDateRange();
 
-// ===== WRITER CARDS =====
-function renderWriterCards(filtered, from, to) {
-  const grid = document.getElementById('writerGrid');
-  grid.innerHTML = '';
-
-  const cardData = WRITER_SLUGS.map(slug => {
-    const writerPosts = filtered.filter(p => p.a.includes(slug));
-    const newCount = writerPosts.filter(p => classifyPost(p, from, to) === 'new').length;
-    const updCount = writerPosts.filter(p => classifyPost(p, from, to) === 'updated').length;
-    const totalAllTime = ALL_POSTS.filter(p => p.a.includes(slug)).length;
-    const dates = writerPosts.flatMap(p => [p.d, p.u].filter(Boolean)).sort().reverse();
-    return { slug, writerPosts, newCount, updCount, totalAllTime, lastActivity: dates[0] || 'N/A' };
-  }).sort((a,b) => b.writerPosts.length - a.writerPosts.length);
-
-  cardData.forEach(({ slug, writerPosts, newCount, updCount, totalAllTime, lastActivity }) => {
-    const card = document.createElement('div');
-    card.className = 'writer-card';
-    card.style.borderLeft = `4px solid ${TRACKED_WRITERS[slug].color}`;
-    card.innerHTML = `
-      <div class="name">${TRACKED_WRITERS[slug].name}</div>
-      <div class="role" style="color:${TRACKED_WRITERS[slug].color}">Last active: ${fmtDate(lastActivity)}</div>
-      <div class="metrics">
-        <div class="metric"><div class="mv">${writerPosts.length}</div><div class="ml">Period Activity</div></div>
-        <div class="metric"><div class="mv">${totalAllTime}</div><div class="ml">All-time Posts</div></div>
-        <div class="metric"><div class="mv" style="color:var(--green)">${newCount}</div><div class="ml">New Posts</div></div>
-        <div class="metric"><div class="mv" style="color:var(--cyan)">${updCount}</div><div class="ml">Updates</div></div>
+  // Build selectors if not present
+  if(!document.getElementById('cmpSel1')) {
+    const opts = WS.map(s=>`<option value="${s}">${wName(s)}</option>`).join('');
+    body.innerHTML = `
+      <div class="compare-controls">
+        <div class="filter-group"><label>Writer 1</label><select id="cmpSel1">${opts}</select></div>
+        <div class="filter-group"><label>Writer 2</label><select id="cmpSel2">${opts.replace(`value="${WS[0]}"`,`value="${WS[0]}"`)}</select></div>
+        <div class="filter-group"><label>Writer 3 (optional)</label><select id="cmpSel3"><option value="">None</option>${opts}</select></div>
       </div>
-    `;
-    card.addEventListener('click', () => {
-      document.getElementById('writerFilter').value = slug;
-      document.querySelectorAll('.tab')[0].click();
-      refresh();
+      <div id="compareGrid" class="compare-grid"></div>`;
+    // Set defaults
+    if(WS.length>=2) document.getElementById('cmpSel2').value=WS[1];
+    ['cmpSel1','cmpSel2','cmpSel3'].forEach(id=>document.getElementById(id).addEventListener('change',()=>renderCompareGrid(from,to)));
+  }
+  renderCompareGrid(from,to);
+}
+
+function renderCompareGrid(from,to) {
+  const slugs = ['cmpSel1','cmpSel2','cmpSel3'].map(id=>document.getElementById(id).value).filter(Boolean);
+  const unique = [...new Set(slugs)];
+  const grid = document.getElementById('compareGrid');
+  grid.style.gridTemplateColumns = `repeat(${unique.length}, 1fr)`;
+
+  grid.innerHTML = unique.map(slug => {
+    const allW = ALL_POSTS.filter(p=>p.a.includes(slug));
+    const periodW = allW.filter(p=>{const c=new Date(p.d),u=p.u?new Date(p.u):null;return(c>=from&&c<=to)||(u&&u>=from&&u<=to);});
+    const nw = periodW.filter(p=>classify(p,from,to)==='new').length;
+    const up = periodW.filter(p=>classify(p,from,to)==='updated').length;
+    const ratio = nw>0?(nw/Math.max(1,up)).toFixed(1):'0';
+    const tags = {};periodW.forEach(p=>(p.tg||[]).forEach(t=>tags[t]=(tags[t]||0)+1));
+    const topTags = Object.entries(tags).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const dates = allW.flatMap(p=>[p.d,p.u].filter(Boolean)).sort().reverse();
+    const lastActive = dates[0]||'N/A';
+
+    return `<div class="compare-writer" style="border-top:3px solid ${wColor(slug)}">
+      <div class="cw-name" style="color:${wColor(slug)}">${wName(slug)}</div>
+      <div class="compare-stats">
+        <div class="compare-stat"><div class="csv">${periodW.length}</div><div class="csl">Period Total</div></div>
+        <div class="compare-stat"><div class="csv" style="color:var(--green)">${nw}</div><div class="csl">New</div></div>
+        <div class="compare-stat"><div class="csv" style="color:var(--cyan)">${up}</div><div class="csl">Updated</div></div>
+        <div class="compare-stat"><div class="csv">${allW.length}</div><div class="csl">All-time</div></div>
+        <div class="compare-stat"><div class="csv">${ratio}</div><div class="csl">New:Upd</div></div>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Last active: ${fmtD(lastActive)}</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Top tags:</div>
+      ${topTags.map(([t,c])=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0"><span>${t.replace(/-/g,' ')}</span><strong>${c}</strong></div>`).join('')}
+      <canvas id="cmp-${slug}" style="margin-top:12px;max-height:160px"></canvas>
+    </div>`;
+  }).join('');
+
+  // Mini monthly charts
+  unique.forEach(slug => {
+    const key = 'cmp-'+slug;
+    if(charts[key]) charts[key].destroy();
+    const months = [];
+    const d = new Date(from.getFullYear(), from.getMonth(), 1);
+    const end = new Date(to.getFullYear(), to.getMonth(), 1);
+    while(d<=end){months.push(d.toISOString().slice(0,7));d.setMonth(d.getMonth()+1);}
+    if(months.length>24){const step=Math.ceil(months.length/24);const s=months.filter((_,i)=>i%step===0);months.length=0;months.push(...s);}
+    const data = months.map(m=>ALL_POSTS.filter(p=>p.a.includes(slug)&&(p.d.slice(0,7)===m||(p.u&&p.u.slice(0,7)===m))).length);
+    charts[key] = new Chart(document.getElementById(key), {
+      type:'bar', data:{labels:months,datasets:[{data,backgroundColor:wColor(slug)+'99',borderRadius:3}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'var(--text2)',font:{size:9},maxRotation:45}},y:{grid:{color:'var(--surface2)'},ticks:{color:'var(--text2)',font:{size:9}}}}}
     });
+  });
+}
+
+// === CHARTS (existing) ===
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+function renderPostsByWriter(f) {
+  destroyChart('postsByWriter');
+  const c={};WS.forEach(s=>c[s]=0);f.forEach(p=>p.a.filter(a=>WS.includes(a)).forEach(a=>c[a]++));
+  const sorted=Object.entries(c).sort((a,b)=>b[1]-a[1]);
+  charts.postsByWriter=new Chart(document.getElementById('chartPostsByWriter'),{type:'bar',data:{labels:sorted.map(([s])=>wName(s)),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:sorted.map(([s])=>wColor(s)),borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'var(--surface2)'},ticks:{color:'var(--text2)'}},y:{grid:{display:false},ticks:{color:'var(--text)',font:{size:11}}}}}});
+}
+
+function renderNewVsUpdated(f,from,to) {
+  destroyChart('newVsUpdated');
+  const wN={},wU={};WS.forEach(s=>{wN[s]=0;wU[s]=0;});
+  f.forEach(p=>{const t=classify(p,from,to);p.a.filter(a=>WS.includes(a)).forEach(a=>{if(t==='new')wN[a]++;else wU[a]++;});});
+  const sorted=WS.slice().sort((a,b)=>(wN[b]+wU[b])-(wN[a]+wU[a]));
+  charts.newVsUpdated=new Chart(document.getElementById('chartNewVsUpdated'),{type:'bar',data:{labels:sorted.map(s=>wName(s)),datasets:[{label:'New',data:sorted.map(s=>wN[s]),backgroundColor:'var(--green)',borderRadius:4},{label:'Updated',data:sorted.map(s=>wU[s]),backgroundColor:'var(--cyan)',borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'var(--text2)',boxWidth:12}}},scales:{x:{stacked:true,grid:{color:'var(--surface2)'},ticks:{color:'var(--text2)'}},y:{stacked:true,grid:{display:false},ticks:{color:'var(--text)',font:{size:11}}}}}});
+}
+
+function renderMonthlyTrend(from,to) {
+  destroyChart('monthlyTrend');
+  const months=[];const d=new Date(from.getFullYear(),from.getMonth(),1),end=new Date(to.getFullYear(),to.getMonth(),1);
+  while(d<=end){months.push(d.toISOString().slice(0,7));d.setMonth(d.getMonth()+1);}
+  if(months.length>36){const step=Math.ceil(months.length/36);const s=months.filter((_,i)=>i%step===0);months.length=0;months.push(...s);}
+  const ds=WS.map(slug=>{const data=months.map(m=>ALL_POSTS.filter(p=>{if(!p.a.includes(slug))return false;return p.d.slice(0,7)===m||(p.u&&p.u.slice(0,7)===m);}).length);return{label:wName(slug),data,borderColor:wColor(slug),backgroundColor:wColor(slug)+'33',fill:false,tension:0.3,pointRadius:2};});
+  charts.monthlyTrend=new Chart(document.getElementById('chartMonthlyTrend'),{type:'line',data:{labels:months,datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{color:'var(--text2)',boxWidth:12,font:{size:11}}}},scales:{x:{grid:{color:'var(--surface2)'},ticks:{color:'var(--text2)',maxRotation:45,font:{size:10}}},y:{grid:{color:'var(--surface2)'},ticks:{color:'var(--text2)'}}}}});
+}
+
+function renderTagsChart(f) {
+  destroyChart('tags');
+  const tc={};f.forEach(p=>(p.tg||[]).forEach(t=>tc[t]=(tc[t]||0)+1));
+  const sorted=Object.entries(tc).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  charts.tags=new Chart(document.getElementById('chartTags'),{type:'doughnut',data:{labels:sorted.map(([t])=>t.replace(/-/g,' ')),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:['#6366f1','#ec4899','#f59e0b','#22c55e','#06b6d4','#ef4444','#a855f7','#14b8a6','#f97316','#84cc16']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'var(--text2)',font:{size:11},boxWidth:12}}}}});
+}
+
+function renderWriterShare(f) {
+  destroyChart('writerShare');
+  const c={};WS.forEach(s=>c[s]=0);f.forEach(p=>p.a.filter(a=>WS.includes(a)).forEach(a=>c[a]++));
+  const sorted=Object.entries(c).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  charts.writerShare=new Chart(document.getElementById('chartWriterShare'),{type:'pie',data:{labels:sorted.map(([s])=>wName(s)),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:sorted.map(([s])=>wColor(s))}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'var(--text2)',font:{size:11},boxWidth:12}}}}});
+}
+
+// === WRITER CARDS ===
+function renderWriterCards(f,from,to) {
+  const grid=document.getElementById('writerGrid');grid.innerHTML='';
+  WS.map(slug=>{
+    const wp=f.filter(p=>p.a.includes(slug)),nw=wp.filter(p=>classify(p,from,to)==='new').length,up=wp.filter(p=>classify(p,from,to)==='updated').length;
+    const at=ALL_POSTS.filter(p=>p.a.includes(slug)).length;
+    const dates=wp.flatMap(p=>[p.d,p.u].filter(Boolean)).sort().reverse();
+    return{slug,wp,nw,up,at,la:dates[0]||'N/A'};
+  }).sort((a,b)=>b.wp.length-a.wp.length).forEach(({slug,wp,nw,up,at,la})=>{
+    const card=document.createElement('div');card.className='writer-card';card.style.borderLeft=`4px solid ${wColor(slug)}`;
+    card.innerHTML=`<div class="name">${wName(slug)}</div><div class="role" style="color:${wColor(slug)}">Last active: ${fmtD(la)}</div><div class="metrics"><div class="metric"><div class="mv">${wp.length}</div><div class="ml">Period</div></div><div class="metric"><div class="mv">${at}</div><div class="ml">All-time</div></div><div class="metric"><div class="mv" style="color:var(--green)">${nw}</div><div class="ml">New</div></div><div class="metric"><div class="mv" style="color:var(--cyan)">${up}</div><div class="ml">Updates</div></div></div>`;
+    card.addEventListener('click',()=>{document.getElementById('writerFilter').value=slug;document.querySelectorAll('.tab')[0].click();refresh();});
     grid.appendChild(card);
   });
 }
 
-// ===== WEEKLY TIMELINE =====
+// === ACTIVITY FEED ===
+function renderActivityFeed() {
+  const f=getFiltered(),{from,to}=getDateRange();
+  const events=[];
+  f.forEach(p=>{
+    const a=p.a.filter(a=>WS.includes(a)),c=new Date(p.d),u=p.u?new Date(p.u):null;
+    if(c>=from&&c<=to) events.push({date:p.d,type:'published',title:p.t,slug:p.s,authors:a,tags:p.tg||[]});
+    if(u&&u>=from&&u<=to&&p.u!==p.d) events.push({date:p.u,type:'updated',title:p.t,slug:p.s,authors:a,tags:p.tg||[]});
+  });
+  events.sort((a,b)=>b.date.localeCompare(a.date));
+  const groups={};events.forEach(e=>{if(!groups[e.date])groups[e.date]=[];groups[e.date].push(e);});
+  const dates=Object.keys(groups).sort().reverse();
+  const feed=document.getElementById('activityFeed');
+  if(!dates.length){feed.innerHTML='<div style="padding:40px;text-align:center;color:var(--text2)">No activity in selected period.</div>';return;}
+  const today=new Date().toISOString().slice(0,10),yesterday=new Date(Date.now()-864e5).toISOString().slice(0,10);
+  feed.innerHTML=dates.map(date=>{
+    const items=groups[date];
+    let label=fmtDL(date);if(date===today)label='Today — '+label;else if(date===yesterday)label='Yesterday — '+label;
+    return `<div class="feed-date-group"><div class="feed-date-header">${label}<span class="feed-count">${items.length}</span></div>${items.map(e=>{
+      const names=e.authors.map(a=>`<strong style="color:${wColor(a)}">${wName(a)}</strong>`).join(', ');
+      const verb=e.type==='published'?'published':'updated';const vc=e.type==='published'?'var(--green)':'var(--cyan)';
+      return `<div class="feed-item"><div class="feed-dot ${e.type==='published'?'new':'updated'}"></div><div class="feed-content"><div class="feed-action">${names} <span style="color:${vc}">${verb}</span></div><a class="feed-title" href="https://www.vantagecircle.com/en/blog/${e.slug}/" target="_blank">${esc(e.title||e.slug)}</a>${e.tags.length?`<div class="feed-tags">${e.tags.map(t=>t.replace(/-/g,' ')).join(' / ')}</div>`:''}</div></div>`;
+    }).join('')}</div>`;
+  }).join('');
+}
+
+// === CALENDAR ===
+function renderCalendar() {
+  const area=document.getElementById('heatmapArea'),f=getFiltered(),{from,to}=getDateRange();
+  const dateMap={};
+  f.forEach(p=>{
+    const a=p.a.filter(a=>WS.includes(a)),c=new Date(p.d),u=p.u?new Date(p.u):null;
+    if(c>=from&&c<=to){if(!dateMap[p.d])dateMap[p.d]=[];dateMap[p.d].push({type:'published',title:p.t,slug:p.s,authors:a});}
+    if(u&&u>=from&&u<=to&&p.u!==p.d){if(!dateMap[p.u])dateMap[p.u]=[];dateMap[p.u].push({type:'updated',title:p.t,slug:p.s,authors:a});}
+  });
+  const now=new Date();
+  const calStart=new Date(Math.max(from.getTime(),new Date(now.getFullYear()-1,now.getMonth(),now.getDate()).getTime()));
+  const calEnd=new Date(Math.min(to.getTime(),now.getTime()));
+  const start=new Date(calStart);start.setDate(start.getDate()-start.getDay());
+  const weeks=[];const d=new Date(start);
+  while(d<=calEnd||weeks.length<2){const week=[];for(let i=0;i<7;i++){const ds=d.toISOString().slice(0,10);const inR=d>=calStart&&d<=calEnd;week.push({date:ds,count:inR?(dateMap[ds]||[]).length:-1,events:dateMap[ds]||[]});d.setDate(d.getDate()+1);}weeks.push(week);if(d>calEnd)break;}
+  const maxC=Math.max(1,...Object.values(dateMap).map(v=>v.length));
+  function cc(n){if(n<0)return'var(--bg)';if(n===0)return'var(--surface2)';const p=n/maxC;if(p<=0.25)return'#1e3a5f';if(p<=0.5)return'#1d4ed8';if(p<=0.75)return'#6366f1';return'#a78bfa';}
+  const mLabels=[];let lm=-1;
+  weeks.forEach((w,i)=>{const fd=w.find(d=>d.count>=0);if(fd){const m=new Date(fd.date).getMonth();if(m!==lm){mLabels.push({i,l:new Date(fd.date).toLocaleDateString('en-US',{month:'short'})});lm=m;}}});
+  const tooltip=document.getElementById('tooltip');
+  area.innerHTML=`<div style="margin-bottom:8px;display:flex;gap:3px;padding-left:30px;position:relative;height:18px">${mLabels.map(m=>`<span style="position:absolute;left:${30+m.i*17}px;font-size:10px;color:var(--text2)">${m.l}</span>`).join('')}</div><div style="display:flex;gap:4px"><div class="heatmap-days"><span>&nbsp;</span><span>Mon</span><span>&nbsp;</span><span>Wed</span><span>&nbsp;</span><span>Fri</span><span>&nbsp;</span></div><div class="heatmap-grid">${weeks.map(w=>`<div class="heatmap-week">${w.map(d=>`<div class="heatmap-cell" data-date="${d.date}" data-count="${d.count}" style="background:${cc(d.count)}"></div>`).join('')}</div>`).join('')}</div></div><div class="heatmap-legend" style="margin-top:16px"><span>Less</span><div class="heatmap-legend-cell" style="background:var(--surface2)"></div><div class="heatmap-legend-cell" style="background:#1e3a5f"></div><div class="heatmap-legend-cell" style="background:#1d4ed8"></div><div class="heatmap-legend-cell" style="background:#6366f1"></div><div class="heatmap-legend-cell" style="background:#a78bfa"></div><span>More</span></div>`;
+  area.querySelectorAll('.heatmap-cell').forEach(cell=>{
+    cell.addEventListener('mouseenter',e=>{
+      const date=cell.dataset.date,count=parseInt(cell.dataset.count);if(count<0)return;
+      const ev=dateMap[date]||[];let html=`<div class="tip-date">${fmtDL(date)}</div>`;
+      if(!ev.length)html+='<div class="tip-item" style="color:var(--text2)">No activity</div>';
+      else html+=ev.slice(0,8).map(e=>`<div class="tip-item"><strong>${e.authors.map(a=>wName(a)).join(', ')}</strong> <span style="color:${e.type==='published'?'var(--green)':'var(--cyan)'}">${e.type}</span> "${esc((e.title||'').slice(0,50))}${(e.title||'').length>50?'...':''}"</div>`).join('')+(ev.length>8?`<div class="tip-item" style="color:var(--text2)">+${ev.length-8} more</div>`:'');
+      tooltip.innerHTML=html;tooltip.classList.remove('hidden');const r=cell.getBoundingClientRect();tooltip.style.left=(r.left+20)+'px';tooltip.style.top=(r.bottom+8)+'px';
+    });
+    cell.addEventListener('mouseleave',()=>tooltip.classList.add('hidden'));
+  });
+}
+
+// === TIMELINE ===
 function renderTimeline() {
   destroyChart('weeklyTimeline');
-  const { from, to } = getDateRange();
-  const weeks = [];
-  const d = new Date(from); d.setDate(d.getDate() - d.getDay());
-  while (d <= to) { weeks.push(d.toISOString().slice(0,10)); d.setDate(d.getDate() + 7); }
-  if (weeks.length > 52) { const step = Math.ceil(weeks.length / 52); const s = weeks.filter((_,i) => i % step === 0); weeks.length = 0; weeks.push(...s); }
-
-  const datasets = WRITER_SLUGS.map(slug => {
-    const data = weeks.map(w => {
-      const wStart = new Date(w); const wEnd = new Date(w); wEnd.setDate(wEnd.getDate() + 7);
-      return ALL_POSTS.filter(p => {
-        if (!p.a.includes(slug)) return false;
-        const cd = new Date(p.d); const ud = p.u ? new Date(p.u) : null;
-        return (cd >= wStart && cd < wEnd) || (ud && ud >= wStart && ud < wEnd);
-      }).length;
-    });
-    return { label: TRACKED_WRITERS[slug].name, data, backgroundColor: TRACKED_WRITERS[slug].color, borderRadius: 2 };
-  });
-
-  charts.weeklyTimeline = new Chart(document.getElementById('chartWeeklyTimeline'), {
-    type: 'bar', data: { labels: weeks, datasets },
-    options: { responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 12, font: { size: 11 } } } },
-      scales: {
-        x: { stacked: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8', maxRotation: 45, font: { size: 10 } } },
-        y: { stacked: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
-      }
-    }
-  });
+  const{from,to}=getDateRange();const weeks=[];const d=new Date(from);d.setDate(d.getDate()-d.getDay());
+  while(d<=to){weeks.push(d.toISOString().slice(0,10));d.setDate(d.getDate()+7);}
+  if(weeks.length>52){const step=Math.ceil(weeks.length/52);const s=weeks.filter((_,i)=>i%step===0);weeks.length=0;weeks.push(...s);}
+  const ds=WS.map(slug=>{const data=weeks.map(w=>{const ws=new Date(w),we=new Date(w);we.setDate(we.getDate()+7);return ALL_POSTS.filter(p=>{if(!p.a.includes(slug))return false;const cd=new Date(p.d),ud=p.u?new Date(p.u):null;return(cd>=ws&&cd<we)||(ud&&ud>=ws&&ud<we);}).length;});return{label:wName(slug),data,backgroundColor:wColor(slug),borderRadius:2};});
+  charts.weeklyTimeline=new Chart(document.getElementById('chartWeeklyTimeline'),{type:'bar',data:{labels:weeks,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'var(--text2)',boxWidth:12,font:{size:11}}}},scales:{x:{stacked:true,grid:{color:'var(--surface2)'},ticks:{color:'var(--text2)',maxRotation:45,font:{size:10}}},y:{stacked:true,grid:{color:'var(--surface2)'},ticks:{color:'var(--text2)'}}}}});
 }
 
-// ===== POSTS TABLE =====
-let currentSort = { col: 'updated', asc: false };
-
+// === POSTS TABLE ===
+let currentSort={col:'updated',asc:false};
 function renderPostsTable() {
-  const filtered = getFilteredPosts();
-  const { from, to } = getDateRange();
-  const search = (document.getElementById('postSearch').value || '').toLowerCase();
-
-  let rows = filtered.map(p => ({
-    title: p.t,
-    slug: p.s,
-    author: p.a.filter(a => WRITER_SLUGS.includes(a)).map(a => TRACKED_WRITERS[a].name).join(', '),
-    date: p.d,
-    updated: p.u || '',
-    type: classifyPost(p, from, to),
-    tags: (p.tg||[]).join(', ')
-  }));
-
-  if (search) {
-    rows = rows.filter(r => r.title.toLowerCase().includes(search) || r.author.toLowerCase().includes(search) || r.tags.toLowerCase().includes(search));
-  }
-
-  rows.sort((a,b) => {
-    let va = a[currentSort.col] || '', vb = b[currentSort.col] || '';
-    va = va.toLowerCase(); vb = vb.toLowerCase();
-    if (va < vb) return currentSort.asc ? -1 : 1;
-    if (va > vb) return currentSort.asc ? 1 : -1;
-    return 0;
-  });
-
-  document.getElementById('tableCount').textContent = rows.length;
-
-  document.getElementById('postsTableBody').innerHTML = rows.map(r => `
-    <tr>
-      <td><a href="https://www.vantagecircle.com/en/blog/${r.slug}/" target="_blank" style="color:var(--accent2);text-decoration:none">${escHtml(r.title || r.slug)}</a></td>
-      <td>${escHtml(r.author)}</td>
-      <td style="white-space:nowrap">${fmtDate(r.date)}</td>
-      <td style="white-space:nowrap">${fmtDate(r.updated)}</td>
-      <td><span class="badge ${r.type === 'new' ? 'badge-new' : 'badge-updated'}">${r.type}</span></td>
-      <td style="color:var(--text2);font-size:11px">${escHtml(r.tags)}</td>
-    </tr>
-  `).join('');
-
-  document.querySelectorAll('th[data-sort] .sort-arrow').forEach(el => el.textContent = '');
-  const activeHeader = document.querySelector(`th[data-sort="${currentSort.col}"] .sort-arrow`);
-  if (activeHeader) activeHeader.textContent = currentSort.asc ? ' \u25B2' : ' \u25BC';
+  const f=getFiltered(),{from,to}=getDateRange(),search=(document.getElementById('postSearch').value||'').toLowerCase();
+  let rows=f.map(p=>({title:p.t,slug:p.s,author:p.a.filter(a=>WS.includes(a)).map(a=>wName(a)).join(', '),date:p.d,updated:p.u||'',type:classify(p,from,to),tags:(p.tg||[]).join(', ')}));
+  if(search)rows=rows.filter(r=>r.title.toLowerCase().includes(search)||r.author.toLowerCase().includes(search)||r.tags.toLowerCase().includes(search));
+  rows.sort((a,b)=>{let va=a[currentSort.col]||'',vb=b[currentSort.col]||'';va=va.toLowerCase();vb=vb.toLowerCase();if(va<vb)return currentSort.asc?-1:1;if(va>vb)return currentSort.asc?1:-1;return 0;});
+  document.getElementById('tableCount').textContent=rows.length;
+  document.getElementById('postsTableBody').innerHTML=rows.map(r=>`<tr><td><a href="https://www.vantagecircle.com/en/blog/${r.slug}/" target="_blank" style="color:var(--accent2);text-decoration:none">${esc(r.title||r.slug)}</a></td><td>${esc(r.author)}</td><td style="white-space:nowrap">${fmtD(r.date)}</td><td style="white-space:nowrap">${fmtD(r.updated)}</td><td><span class="badge ${r.type==='new'?'badge-new':'badge-updated'}">${r.type}</span></td><td style="color:var(--text2);font-size:11px">${esc(r.tags)}</td></tr>`).join('');
+  document.querySelectorAll('th[data-sort] .sort-arrow').forEach(el=>el.textContent='');
+  const ah=document.querySelector(`th[data-sort="${currentSort.col}"] .sort-arrow`);if(ah)ah.textContent=currentSort.asc?' \u25B2':' \u25BC';
 }
+function sortTable(col){if(currentSort.col===col)currentSort.asc=!currentSort.asc;else{currentSort.col=col;currentSort.asc=true;}renderPostsTable();}
 
-function sortTable(col) {
-  if (currentSort.col === col) currentSort.asc = !currentSort.asc;
-  else { currentSort.col = col; currentSort.asc = true; }
-  renderPostsTable();
-}
-
-// ===== CSV EXPORT =====
+// === CSV EXPORT ===
 function exportCSV() {
-  const filtered = getFilteredPosts();
-  const { from, to } = getDateRange();
-  const header = 'Title,Author,Published,Updated,Type,Tags\n';
-  const rows = filtered.map(p => {
-    const type = classifyPost(p, from, to);
-    return [
-      '"' + (p.t||'').replace(/"/g,'""') + '"',
-      '"' + p.a.filter(a => WRITER_SLUGS.includes(a)).map(a => TRACKED_WRITERS[a].name).join('; ') + '"',
-      p.d, p.u || '', type,
-      '"' + (p.tg||[]).join('; ') + '"'
-    ].join(',');
-  }).join('\n');
-
-  const blob = new Blob([header + rows], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'vc-content-tracker-' + new Date().toISOString().slice(0,10) + '.csv';
-  a.click();
+  const f=getFiltered(),{from,to}=getDateRange();
+  const header='Title,Author,Published,Updated,Type,Tags\n';
+  const rows=f.map(p=>['"'+(p.t||'').replace(/"/g,'""')+'"','"'+p.a.filter(a=>WS.includes(a)).map(a=>wName(a)).join('; ')+'"',p.d,p.u||'',classify(p,from,to),'"'+(p.tg||[]).join('; ')+'"'].join(',')).join('\n');
+  const blob=new Blob([header+rows],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='vc-content-tracker-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
 }
 </script>
 </body>
