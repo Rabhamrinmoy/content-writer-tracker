@@ -240,7 +240,13 @@
   </div>
 
   <div id="tab-leaderboard" class="hidden"><div class="card"><h3>Writer Leaderboard</h3><div class="table-scroll" id="leaderboardBody"></div></div></div>
-  <div id="tab-alerts" class="hidden"><div id="alertsBody"></div></div>
+  <div id="tab-alerts" class="hidden">
+    <div style="display:flex;gap:12px;margin-bottom:20px">
+      <button class="btn" onclick="document.getElementById('alertIdle').scrollIntoView({behavior:'smooth'})" style="font-size:12px">Writer Idle Alerts</button>
+      <button class="btn btn-outline" onclick="document.getElementById('alertStale').scrollIntoView({behavior:'smooth'})" style="font-size:12px">Stale Content</button>
+    </div>
+    <div id="alertsBody"></div>
+  </div>
   <div id="tab-activity" class="hidden"><div class="card"><h3>Activity Feed — Date-wise Log</h3><div class="feed-scroll" id="activityFeed"></div></div></div>
   <div id="tab-calendar" class="hidden"><div class="heatmap-container"><h3>Activity Calendar</h3><div id="heatmapArea"></div></div></div>
   <div id="tab-writers" class="hidden"><div class="writer-summary-grid" id="writerGrid"></div></div>
@@ -497,7 +503,7 @@ function renderAlerts() {
 
   body.innerHTML = `
     <div class="alerts-section">
-      <h4>Writer Idle Alerts (30+ days inactive)</h4>
+      <h4 id="alertIdle">Writer Idle Alerts (30+ days inactive)</h4>
       <div class="alerts-grid">
         ${idleWriters.length === 0 ? '<div class="alert-card"><div class="alert-icon">&#10003;</div><div class="alert-body"><div class="alert-title" style="color:var(--green)">All writers active</div><div class="alert-desc">Everyone has been active in the last 30 days.</div></div></div>' :
         idleWriters.map(w=>`
@@ -511,8 +517,8 @@ function renderAlerts() {
       </div>
     </div>
     <div class="alerts-section">
-      <h4>Stale Content (not updated in 12+ months) — ${stalePosts.length} posts</h4>
-      <div class="card"><div class="table-scroll" style="max-height:400px"><table><thead><tr>
+      <h4 id="alertStale">Stale Content (not updated in 12+ months) — ${stalePosts.length} posts</h4>
+      <div class="card"><div class="table-scroll" style="max-height:600px"><table><thead><tr>
         <th>Title</th><th>Author</th><th>Last Updated</th><th>Age</th>
       </tr></thead><tbody>
         ${stalePosts.slice(0,100).map(p=>{
