@@ -966,20 +966,12 @@ function exportCSV() {
 }
 </script>
 
-<!-- Password gate logic -->
+</div><!-- /mainApp -->
+
+<!-- Password gate logic (outside mainApp so it runs even when mainApp is hidden) -->
 <script>
-// SHA-256 hash of the password (not storing plaintext in source)
-const PW_HASH = '9f99cf8e4e1e8b0b35c02f769a3a89c4af1b8ed5e6e3e0e6a5e3e8e1a8b0c2d4';
-
-async function sha256(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-
 async function checkPw() {
   const input = document.getElementById('pwInput').value;
-  const hash = await sha256(input);
-  // Compare against known password directly (hashing is for future-proofing)
   if (input === 'Guwahatiwelcome@123!') {
     sessionStorage.setItem('pw_ok', '1');
     unlock();
@@ -996,7 +988,6 @@ function unlock() {
   renderAll();
 }
 
-// Allow Enter key to submit
 document.getElementById('pwInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') checkPw();
 });
@@ -1006,6 +997,5 @@ if (sessionStorage.getItem('pw_ok') === '1') {
   unlock();
 }
 </script>
-</div><!-- /mainApp -->
 </body>
 </html>
