@@ -331,8 +331,18 @@ function renderStats(filtered, from, to) {
   filtered.forEach(p => p.a.filter(a => WRITER_SLUGS.includes(a)).forEach(a => { writerCounts[a] = (writerCounts[a]||0) + 1; }));
   const topWriter = Object.entries(writerCounts).sort((a,b) => b[1]-a[1])[0];
 
+  // Overall blog counts (all authors, not just tracked)
+  const allBlogTotal = ALL_POSTS.length;
+  const allInRange = ALL_POSTS.filter(p => {
+    const created = new Date(p.d);
+    const updated = p.u ? new Date(p.u) : null;
+    return (created >= from && created <= to) || (updated && updated >= from && updated <= to);
+  }).length;
+  const teamShare = allInRange > 0 ? ((filtered.length / allInRange) * 100).toFixed(1) : 0;
+
   document.getElementById('statsRow').innerHTML = `
-    <div class="stat-card"><div class="label">Total Activity</div><div class="value">${filtered.length}</div><div class="sub">posts in selected period</div></div>
+    <div class="stat-card"><div class="label">Overall Blog Posts</div><div class="value" style="color:var(--orange)">${allInRange}</div><div class="sub">all authors in period (${allBlogTotal} all-time)</div></div>
+    <div class="stat-card"><div class="label">Team Activity</div><div class="value">${filtered.length}</div><div class="sub">${teamShare}% of total blog output</div></div>
     <div class="stat-card"><div class="label">New Posts</div><div class="value" style="color:var(--green)">${newPosts.length}</div><div class="sub">first published</div></div>
     <div class="stat-card"><div class="label">Content Updates</div><div class="value" style="color:var(--cyan)">${updatedPosts.length}</div><div class="sub">refreshed posts</div></div>
     <div class="stat-card"><div class="label">Active Writers</div><div class="value">${activeWriters}</div><div class="sub">of ${WRITER_SLUGS.length} tracked</div></div>
