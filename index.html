@@ -244,6 +244,7 @@
     <div style="display:flex;gap:12px;margin-bottom:20px">
       <button class="btn" onclick="document.getElementById('alertIdle').scrollIntoView({behavior:'smooth'})" style="font-size:12px">Writer Idle Alerts</button>
       <button class="btn btn-outline" onclick="document.getElementById('alertStale').scrollIntoView({behavior:'smooth'})" style="font-size:12px">Stale Content</button>
+      <button class="btn btn-outline" onclick="document.getElementById('alertSuggestions').scrollIntoView({behavior:'smooth'})" style="font-size:12px">Recommendations</button>
     </div>
     <div id="alertsBody"></div>
   </div>
@@ -534,8 +535,122 @@ function renderAlerts() {
         }).join('')}
       </tbody></table></div></div>
       ${stalePosts.length>100?`<p style="padding:12px;color:var(--text2);font-size:12px">Showing first 100 of ${stalePosts.length} stale posts.</p>`:''}
+    </div>
+    <div class="alerts-section">
+      <h4 id="alertSuggestions">Recommendations — What To Do With Stale Content</h4>
+      ${renderStaleRecommendations(stalePosts, now)}
     </div>`;
 }
+
+function renderStaleRecommendations(stalePosts, now) {
+  if(!stalePosts.length) return '<div class="alert-card"><div class="alert-icon">&#10003;</div><div class="alert-body"><div class="alert-title" style="color:'+cv('--green')+'">No stale content</div><div class="alert-desc">All tracked posts have been updated within the last 12 months.</div></div></div>';
+
+  // Categorize stale posts by severity
+  const critical = stalePosts.filter(p => daysDiff(new Date(p.u||p.d), now) > 730); // 2+ years
+  const aging = stalePosts.filter(p => { const d=daysDiff(new Date(p.u||p.d),now); return d>365 && d<=730; }); // 1-2 years
+
+  // Group by tag to find which topics are most neglected
+  const tagStale = {};
+  stalePosts.forEach(p => (p.tg||[]).forEach(t => { if(!tagStale[t]) tagStale[t]=[]; tagStale[t].push(p); }));
+  const neglectedTopics = Object.entries(tagStale).sort((a,b)=>b[1].length-a[1].length).slice(0,5);
+
+  // Group by writer to find workload distribution for refresh
+  const writerStale = {};
+  stalePosts.forEach(p => p.a.filter(a=>WS.includes(a)).forEach(a => { if(!writerStale[a]) writerStale[a]=[]; writerStale[a].push(p); }));
+  const writerLoad = Object.entries(writerStale).sort((a,b)=>b[1].length-a[1].length);
+
+  // High-priority refresh candidates (evergreen topics that are very old)
+  const evergreen = ['employee-engagement','rewards-and-recognition','company-culture','employee-wellness','hr','management','leadership'];
+  const priorityRefresh = stalePosts.filter(p => (p.tg||[]).some(t => evergreen.includes(t))).slice(0,10);
+
+  return `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <div class="alert-card" style="border-left:3px solid ${cv('--red')}">
+        <div class="alert-icon" style="color:${cv('--red')}">&#9888;</div>
+        <div class="alert-body">
+          <div class="alert-title">Critical: ${critical.length} posts over 2 years old</div>
+          <div class="alert-desc">These are severely outdated. Consider updating with current data/trends, or archiving if no longer relevant.</div>
+        </div>
+      </div>
+      <div class="alert-card" style="border-left:3px solid ${cv('--orange')}">
+        <div class="alert-icon" style="color:${cv('--orange')}">&#9888;</div>
+        <div class="alert-body">
+          <div class="alert-title">Aging: ${aging.length} posts 1-2 years old</div>
+          <div class="alert-desc">Schedule these for a content refresh — update stats, add new sections, refresh examples and CTAs.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h3>Most Neglected Topics</h3>
+      <div style="padding:16px">
+        <p style="font-size:12px;color:${cv('--text2')};margin-bottom:12px">Topics with the most stale posts — prioritize refreshing content in these areas:</p>
+        ${neglectedTopics.map(([tag, posts]) => {
+          const pct = Math.round((posts.length / Math.max(1, stalePosts.length)) * 100);
+          return `<div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+              <span>${tag.replace(/-/g,' ')}</span>
+              <span style="color:${cv('--text2')}">${posts.length} stale posts (${pct}%)</span>
+            </div>
+            <div style="height:6px;background:${cv('--surface2')};border-radius:3px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:${cv('--orange')};border-radius:3px"></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h3>Suggested Refresh Workload by Writer</h3>
+      <div style="padding:16px">
+        <p style="font-size:12px;color:${cv('--text2')};margin-bottom:12px">Distribute stale content refresh tasks to original authors — they know the topic best:</p>
+        <table style="font-size:13px;width:100%"><thead><tr>
+          <th style="cursor:default">Writer</th><th style="cursor:default">Stale Posts</th><th style="cursor:default">Oldest Post</th><th style="cursor:default">Suggested Action</th>
+        </tr></thead><tbody>
+          ${writerLoad.map(([slug, posts]) => {
+            const oldest = posts.sort((a,b)=>(a.u||a.d).localeCompare(b.u||b.d))[0];
+            const oldestAge = daysDiff(new Date(oldest.u||oldest.d), now);
+            let action = 'Schedule monthly refresh';
+            if(posts.length > 20) action = 'Prioritize — high backlog, refresh 3-4/week';
+            else if(posts.length > 10) action = 'Moderate backlog — refresh 2/week';
+            else if(posts.length <= 5) action = 'Quick wins — can clear in 1 week';
+            return `<tr>
+              <td style="border-top:1px solid ${cv('--surface2')}"><strong style="color:${wColor(slug)}">${wName(slug)}</strong></td>
+              <td style="border-top:1px solid ${cv('--surface2')}">${posts.length}</td>
+              <td style="border-top:1px solid ${cv('--surface2')};font-size:12px;color:${cv('--text2')}">${fmtD(oldest.u||oldest.d)} (${Math.round(oldestAge/30)}mo ago)</td>
+              <td style="border-top:1px solid ${cv('--surface2')};font-size:12px">${action}</td>
+            </tr>`;
+          }).join('')}
+        </tbody></table>
+      </div>
+    </div>
+
+    ${priorityRefresh.length > 0 ? `<div class="card">
+      <h3>Priority Refresh List — Evergreen Posts That Need Attention</h3>
+      <div style="padding:4px 0">
+        <p style="font-size:12px;color:${cv('--text2')};padding:12px 16px">These cover core topics (engagement, recognition, culture, wellness) and likely still get organic traffic — refreshing them has the highest ROI:</p>
+        <table style="font-size:13px;width:100%"><thead><tr>
+          <th style="cursor:default">Title</th><th style="cursor:default">Author</th><th style="cursor:default">Topic</th><th style="cursor:default">Last Updated</th><th style="cursor:default">Action</th>
+        </tr></thead><tbody>
+          ${priorityRefresh.map(p => {
+            const lastDate = p.u||p.d;
+            const age = daysDiff(new Date(lastDate), now);
+            const topTag = (p.tg||[])[0]||'';
+            let action = 'Refresh stats & examples';
+            if(age > 1095) action = 'Major rewrite needed';
+            else if(age > 730) action = 'Update data, add 2026 context';
+            else action = 'Light refresh — update intro & CTA';
+            return `<tr>
+              <td style="border-top:1px solid ${cv('--surface2')}"><a href="https://www.vantagecircle.com/en/blog/${p.s}/" target="_blank" style="color:${cv('--accent2')};text-decoration:none">${esc(p.t||p.s)}</a></td>
+              <td style="border-top:1px solid ${cv('--surface2')};font-size:12px">${p.a.filter(a=>WS.includes(a)).map(a=>'<span style="color:'+wColor(a)+'">'+wName(a)+'</span>').join(', ')}</td>
+              <td style="border-top:1px solid ${cv('--surface2')};font-size:12px;color:${cv('--text2')}">${topTag.replace(/-/g,' ')}</td>
+              <td style="border-top:1px solid ${cv('--surface2')};font-size:12px;white-space:nowrap">${fmtD(lastDate)}</td>
+              <td style="border-top:1px solid ${cv('--surface2')};font-size:12px">${action}</td>
+            </tr>`;
+          }).join('')}
+        </tbody></table>
+      </div>
+    </div>` : ''}`;
 
 // === TAG MATRIX ===
 function renderTagMatrix() {
