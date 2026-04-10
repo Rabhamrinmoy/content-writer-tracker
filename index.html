@@ -763,7 +763,7 @@ function renderCalendar() {
   const weeks=[];const d=new Date(start);
   while(d<=calEnd||weeks.length<2){const week=[];for(let i=0;i<7;i++){const ds=d.toISOString().slice(0,10);const inR=d>=calStart&&d<=calEnd;week.push({date:ds,count:inR?(dateMap[ds]||[]).length:-1,events:dateMap[ds]||[]});d.setDate(d.getDate()+1);}weeks.push(week);if(d>calEnd)break;}
   const maxC=Math.max(1,...Object.values(dateMap).map(v=>v.length));
-  function cc(n){if(n<0)returncv('--bg');if(n===0)returncv('--surface2');const p=n/maxC;if(p<=0.25)return'#1e3a5f';if(p<=0.5)return'#1d4ed8';if(p<=0.75)return'#6366f1';return'#a78bfa';}
+  function cc(n){if(n<0)return cv('--bg');if(n===0)return cv('--surface2');const p=n/maxC;if(p<=0.25)return'#1e3a5f';if(p<=0.5)return'#1d4ed8';if(p<=0.75)return'#6366f1';return'#a78bfa';}
   const mLabels=[];let lm=-1;
   weeks.forEach((w,i)=>{const fd=w.find(d=>d.count>=0);if(fd){const m=new Date(fd.date).getMonth();if(m!==lm){mLabels.push({i,l:new Date(fd.date).toLocaleDateString('en-US',{month:'short'})});lm=m;}}});
   const tooltip=document.getElementById('tooltip');
