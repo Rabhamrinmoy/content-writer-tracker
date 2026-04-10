@@ -1,0 +1,86 @@
+name: Update Tracker Data
+
+on:
+  schedule:
+    # Runs daily at 6:00 AM IST (00:30 UTC)
+    - cron: '30 0 * * *'
+  workflow_dispatch: # Manual trigger from GitHub Actions tab
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout tracker repo
+        uses: actions/checkout@v4
+
+      - name: Clone Astro repo
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse https://x-access-token:${{ secrets.ASTRO_REPO_TOKEN }}@github.com/VantageCircle/vantagecircle-astro.git astro-repo
+          cd astro-repo
+          git sparse-checkout set content/en/posts
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Generate data.js
+        run: |
+          python3 - <<'PYEOF'
+          import os, re, json
+
+          posts_dir = 'astro-repo/content/en/posts'
+          posts = []
+          for fname in sorted(os.listdir(posts_dir)):
+              if not fname.endswith('.md'):
+                  continue
+              with open(os.path.join(posts_dir, fname), 'r', encoding='utf-8') as f:
+                  content = f.read()
+              m = re.match(r'^---\s*\n(.*?)\n---', content, re.DOTALL)
+              if not m:
+                  continue
+              fm = m.group(1)
+              title_m = re.search(r'^title:\s*"(.+?)"', fm, re.M)
+              slug_m = re.search(r'^slug:\s*"(.+?)"', fm, re.M)
+              date_m = re.search(r'^date:\s*(\S+)', fm, re.M)
+              updated_m = re.search(r'^updated:\s*(\S+)', fm, re.M)
+              author_m = re.search(r'^author:\s*(.+)', fm, re.M)
+              tags_section = re.search(r'^tags:\s*\n((?:\s+-\s+.+\n)*)', fm, re.M)
+
+              title = title_m.group(1) if title_m else ''
+              slug = slug_m.group(1) if slug_m else fname.replace('.md', '')
+              date = date_m.group(1) if date_m else ''
+              updated = updated_m.group(1) if updated_m else ''
+
+              tags = []
+              if tags_section:
+                  tags = [t.strip().lstrip('- ') for t in tags_section.group(1).strip().split('\n') if t.strip()]
+
+              author_raw = author_m.group(1).strip() if author_m else ''
+              if author_raw.startswith('['):
+                  authors = [a.strip().strip('"').strip("'") for a in author_raw.strip('[]').split(',')]
+              else:
+                  authors = [author_raw.strip('"').strip("'")]
+
+              posts.append({'t': title, 's': slug, 'd': date, 'u': updated, 'a': authors, 'tg': tags})
+
+          js = 'const EMBEDDED_DATA = ' + json.dumps(posts, ensure_ascii=True) + ';'
+          with open('data.js', 'w') as f:
+              f.write(js)
+          print(f'Generated data.js with {len(posts)} posts')
+          PYEOF
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data.js
+          if git diff --cached --quiet; then
+            echo "No changes to data.js"
+          else
+            git commit -m "Auto-update data.js ($(date -u '+%Y-%m-%d'))"
+            git push
+          fi
