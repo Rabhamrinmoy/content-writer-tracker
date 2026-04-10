@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VC Content Writer Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="./data.js"></script>
+<style>
+  :root {
+    --bg: #0f172a; --surface: #1e293b; --surface2: #334155;
+    --text: #f1f5f9; --text2: #94a3b8; --accent: #6366f1;
+    --accent2: #818cf8; --green: #22c55e; --orange: #f59e0b;
+    --red: #ef4444; --cyan: #06b6d4; --pink: #ec4899;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  .header { background: linear-gradient(135deg, #312e81, #1e1b4b); padding: 24px 32px; border-bottom: 1px solid var(--surface2); display: flex; justify-content: space-between; align-items: center; }
+  .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .header p { color: var(--text2); font-size: 13px; margin-top: 4px; }
+  .header .last-updated { color: var(--text2); font-size: 12px; text-align: right; }
+
+  .controls { display: flex; gap: 12px; padding: 16px 32px; background: var(--surface); border-bottom: 1px solid var(--surface2); flex-wrap: wrap; align-items: center; }
+  .controls label { color: var(--text2); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .controls select, .controls input[type="date"] { background: var(--bg); color: var(--text); border: 1px solid var(--surface2); border-radius: 6px; padding: 8px 12px; font-size: 13px; outline: none; }
+  .controls select:focus, .controls input:focus { border-color: var(--accent); }
+  .filter-group { display: flex; flex-direction: column; gap: 4px; }
+
+  .btn { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 13px; cursor: pointer; font-weight: 600; transition: background 0.2s; }
+  .btn:hover { background: var(--accent2); }
+  .btn-outline { background: transparent; border: 1px solid var(--surface2); color: var(--text2); }
+  .btn-outline:hover { border-color: var(--accent); color: var(--text); }
+
+  .dashboard { padding: 24px 32px; display: flex; flex-direction: column; gap: 24px; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+  .stat-card { background: var(--surface); border-radius: 10px; padding: 20px; border: 1px solid var(--surface2); }
+  .stat-card .label { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-card .value { font-size: 32px; font-weight: 700; margin-top: 4px; }
+  .stat-card .sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 1000px) { .chart-grid { grid-template-columns: 1fr; } }
+  .chart-card { background: var(--surface); border-radius: 10px; padding: 20px; border: 1px solid var(--surface2); }
+  .chart-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--text2); }
+  .chart-card canvas { max-height: 320px; }
+  .chart-card.full { grid-column: 1 / -1; }
+
+  .table-card { background: var(--surface); border-radius: 10px; border: 1px solid var(--surface2); overflow: hidden; }
+  .table-card h3 { font-size: 14px; font-weight: 600; padding: 16px 20px; color: var(--text2); border-bottom: 1px solid var(--surface2); display: flex; justify-content: space-between; align-items: center; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px 16px; background: var(--bg); color: var(--text2); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; position: sticky; top: 0; cursor: pointer; user-select: none; }
+  th:hover { color: var(--accent2); }
+  td { padding: 10px 16px; border-top: 1px solid var(--surface2); }
+  tr:hover td { background: rgba(99,102,241,0.05); }
+  .table-scroll { max-height: 500px; overflow-y: auto; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-new { background: rgba(34,197,94,0.15); color: var(--green); }
+  .badge-updated { background: rgba(6,182,212,0.15); color: var(--cyan); }
+
+  .writer-summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .writer-card { background: var(--surface); border-radius: 10px; padding: 20px; border: 1px solid var(--surface2); transition: border-color 0.2s; cursor: pointer; }
+  .writer-card:hover { border-color: var(--accent); }
+  .writer-card .name { font-size: 16px; font-weight: 700; }
+  .writer-card .role { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .writer-card .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .writer-card .metric .mv { font-size: 20px; font-weight: 700; }
+  .writer-card .metric .ml { font-size: 11px; color: var(--text2); text-transform: uppercase; }
+
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--surface2); padding: 0 32px; background: var(--surface); }
+  .tab { padding: 12px 20px; font-size: 13px; font-weight: 600; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; user-select: none; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent2); border-bottom-color: var(--accent); }
+
+  .hidden { display: none !important; }
+
+  .search-box { background: var(--bg); color: var(--text); border: 1px solid var(--surface2); border-radius: 6px; padding: 8px 12px; font-size: 13px; width: 220px; outline: none; }
+  .search-box:focus { border-color: var(--accent); }
+  .search-box::placeholder { color: var(--surface2); }
+
+  .sort-arrow { font-size: 10px; margin-left: 4px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Content Writer Activity Tracker</h1>
+    <p>Vantage Circle Blog — <span id="postCount">0</span> posts tracked across <span id="writerCount">0</span> writers</p>
+  </div>
+  <div class="last-updated">
+    Data refreshed<br><strong id="refreshDate">-</strong>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="overview">Overview</div>
+  <div class="tab" data-tab="writers">Writer Cards</div>
+  <div class="tab" data-tab="timeline">Publishing Timeline</div>
+  <div class="tab" data-tab="posts">All Posts</div>
+</div>
+
+<div class="controls">
+  <div class="filter-group">
+    <label>Time Range</label>
+    <select id="timeRange">
+      <option value="30">Last 30 days</option>
+      <option value="90">Last 90 days</option>
+      <option value="180">Last 6 months</option>
+      <option value="365" selected>Last 1 year</option>
+      <option value="730">Last 2 years</option>
+      <option value="0">All time</option>
+      <option value="custom">Custom</option>
+    </select>
+  </div>
+  <div class="filter-group hidden" id="customDateGroup">
+    <label>From</label>
+    <input type="date" id="dateFrom">
+  </div>
+  <div class="filter-group hidden" id="customDateGroup2">
+    <label>To</label>
+    <input type="date" id="dateTo">
+  </div>
+  <div class="filter-group">
+    <label>Writer</label>
+    <select id="writerFilter">
+      <option value="all">All Writers</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Activity</label>
+    <select id="activityFilter">
+      <option value="all">All Activity</option>
+      <option value="new">New Posts Only</option>
+      <option value="updated">Updates Only</option>
+    </select>
+  </div>
+  <div class="filter-group" style="justify-content:flex-end">
+    <label>&nbsp;</label>
+    <button class="btn btn-outline" onclick="exportCSV()">Export CSV</button>
+  </div>
+</div>
+
+<div class="dashboard">
+  <!-- Tab: Overview -->
+  <div id="tab-overview">
+    <div class="stats-row" id="statsRow"></div>
+    <div class="chart-grid">
+      <div class="chart-card"><h3>Posts by Writer</h3><canvas id="chartPostsByWriter"></canvas></div>
+      <div class="chart-card"><h3>New vs Updated (Selected Period)</h3><canvas id="chartNewVsUpdated"></canvas></div>
+      <div class="chart-card full"><h3>Monthly Activity Trend</h3><canvas id="chartMonthlyTrend"></canvas></div>
+      <div class="chart-card"><h3>Tag Distribution (Top 10)</h3><canvas id="chartTags"></canvas></div>
+      <div class="chart-card"><h3>Writer Activity Share</h3><canvas id="chartWriterShare"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Tab: Writer Cards -->
+  <div id="tab-writers" class="hidden">
+    <div class="writer-summary-grid" id="writerGrid"></div>
+  </div>
+
+  <!-- Tab: Timeline -->
+  <div id="tab-timeline" class="hidden">
+    <div class="chart-card"><h3>Weekly Publishing Timeline by Writer</h3><canvas id="chartWeeklyTimeline" style="max-height:500px"></canvas></div>
+  </div>
+
+  <!-- Tab: All Posts -->
+  <div id="tab-posts" class="hidden">
+    <div class="table-card">
+      <h3>
+        <span>Post Activity Log (<span id="tableCount">0</span> posts)</span>
+        <input type="text" class="search-box" id="postSearch" placeholder="Search title, author, or tag...">
+      </h3>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th data-sort="title">Title <span class="sort-arrow"></span></th>
+              <th data-sort="author">Author <span class="sort-arrow"></span></th>
+              <th data-sort="date">Published <span class="sort-arrow"></span></th>
+              <th data-sort="updated">Last Updated <span class="sort-arrow"></span></th>
+              <th data-sort="type">Type <span class="sort-arrow"></span></th>
+              <th data-sort="tags">Tags <span class="sort-arrow"></span></th>
+            </tr>
+          </thead>
+          <tbody id="postsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== WRITER CONFIG =====
+const TRACKED_WRITERS = {
+  'mrinmoy-rabha': { name: 'Mrinmoy Rabha', color: '#6366f1' },
+  'lupamudra-deori': { name: 'Lopamudra Deori', color: '#ec4899' },
+  'supriya-gupta': { name: 'Supriya Gupta', color: '#f59e0b' },
+  'shaoni-gupta': { name: 'Shaoni Gupta', color: '#22c55e' },
+  'susmita-sarma': { name: 'Susmita Sarma', color: '#06b6d4' },
+  'sanjeevani-saikia': { name: 'Sanjeevani Saikia', color: '#ef4444' },
+  'riha-jaishi': { name: 'Riha Jaishi', color: '#a855f7' },
+  'shikha-gogoi': { name: 'Shikha Gogoi', color: '#14b8a6' },
+  'nilotpal-m-saharia': { name: 'Nilotpal M Saharia', color: '#f97316' },
+};
+const WRITER_SLUGS = Object.keys(TRACKED_WRITERS);
+
+let ALL_POSTS = typeof EMBEDDED_DATA !== 'undefined' ? EMBEDDED_DATA : [];
+let charts = {};
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('postCount').textContent = ALL_POSTS.length;
+  document.getElementById('writerCount').textContent = WRITER_SLUGS.length;
+  document.getElementById('refreshDate').textContent = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  populateWriterFilter();
+  bindEvents();
+  refresh();
+});
+
+function populateWriterFilter() {
+  const sel = document.getElementById('writerFilter');
+  WRITER_SLUGS.slice().sort((a,b) => TRACKED_WRITERS[a].name.localeCompare(TRACKED_WRITERS[b].name)).forEach(slug => {
+    const opt = document.createElement('option');
+    opt.value = slug;
+    opt.textContent = TRACKED_WRITERS[slug].name;
+    sel.appendChild(opt);
+  });
+}
+
+function bindEvents() {
+  document.getElementById('timeRange').addEventListener('change', onTimeChange);
+  document.getElementById('writerFilter').addEventListener('change', refresh);
+  document.getElementById('activityFilter').addEventListener('change', refresh);
+  document.getElementById('dateFrom').addEventListener('change', refresh);
+  document.getElementById('dateTo').addEventListener('change', refresh);
+  document.getElementById('postSearch').addEventListener('input', renderPostsTable);
+
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      ['overview','writers','timeline','posts'].forEach(id => {
+        document.getElementById('tab-' + id).classList.toggle('hidden', id !== tab.dataset.tab);
+      });
+      if (tab.dataset.tab === 'timeline') renderTimeline();
+      if (tab.dataset.tab === 'posts') renderPostsTable();
+    });
+  });
+
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => sortTable(th.dataset.sort));
+  });
+}
+
+function onTimeChange() {
+  const v = document.getElementById('timeRange').value;
+  document.getElementById('customDateGroup').classList.toggle('hidden', v !== 'custom');
+  document.getElementById('customDateGroup2').classList.toggle('hidden', v !== 'custom');
+  if (v !== 'custom') refresh();
+}
+
+// ===== FILTERING =====
+function getDateRange() {
+  const v = document.getElementById('timeRange').value;
+  const now = new Date();
+  let from, to = now;
+  if (v === 'custom') {
+    from = document.getElementById('dateFrom').value ? new Date(document.getElementById('dateFrom').value) : new Date('2000-01-01');
+    to = document.getElementById('dateTo').value ? new Date(document.getElementById('dateTo').value) : now;
+  } else if (v === '0') {
+    from = new Date('2000-01-01');
+  } else {
+    from = new Date(now); from.setDate(from.getDate() - parseInt(v));
+  }
+  return { from, to };
+}
+
+function getFilteredPosts() {
+  const { from, to } = getDateRange();
+  const writer = document.getElementById('writerFilter').value;
+  const activity = document.getElementById('activityFilter').value;
+
+  return ALL_POSTS.filter(p => {
+    const isTracked = p.a.some(a => WRITER_SLUGS.includes(a));
+    if (!isTracked) return false;
+    if (writer !== 'all' && !p.a.includes(writer)) return false;
+
+    const created = new Date(p.d);
+    const updated = p.u ? new Date(p.u) : null;
+    const inRangeCreated = created >= from && created <= to;
+    const inRangeUpdated = updated && updated >= from && updated <= to;
+
+    if (activity === 'new') return inRangeCreated;
+    if (activity === 'updated') return inRangeUpdated && !inRangeCreated;
+    return inRangeCreated || inRangeUpdated;
+  });
+}
+
+function classifyPost(p, from, to) {
+  const created = new Date(p.d);
+  const updated = p.u ? new Date(p.u) : null;
+  if (created >= from && created <= to) return 'new';
+  if (updated && updated >= from && updated <= to) return 'updated';
+  return 'other';
+}
+
+function refresh() {
+  const filtered = getFilteredPosts();
+  const { from, to } = getDateRange();
+  renderStats(filtered, from, to);
+  renderPostsByWriter(filtered);
+  renderNewVsUpdated(filtered, from, to);
+  renderMonthlyTrend(from, to);
+  renderTags(filtered);
+  renderWriterShare(filtered);
+  renderWriterCards(filtered, from, to);
+  renderPostsTable();
+}
+
+// ===== STAT CARDS =====
+function renderStats(filtered, from, to) {
+  const newPosts = filtered.filter(p => classifyPost(p, from, to) === 'new');
+  const updatedPosts = filtered.filter(p => classifyPost(p, from, to) === 'updated');
+  const activeWriters = new Set(filtered.flatMap(p => p.a.filter(a => WRITER_SLUGS.includes(a)))).size;
+  const avgPerWriter = activeWriters > 0 ? (filtered.length / activeWriters).toFixed(1) : 0;
+
+  const writerCounts = {};
+  filtered.forEach(p => p.a.filter(a => WRITER_SLUGS.includes(a)).forEach(a => { writerCounts[a] = (writerCounts[a]||0) + 1; }));
+  const topWriter = Object.entries(writerCounts).sort((a,b) => b[1]-a[1])[0];
+
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="label">Total Activity</div><div class="value">${filtered.length}</div><div class="sub">posts in selected period</div></div>
+    <div class="stat-card"><div class="label">New Posts</div><div class="value" style="color:var(--green)">${newPosts.length}</div><div class="sub">first published</div></div>
+    <div class="stat-card"><div class="label">Content Updates</div><div class="value" style="color:var(--cyan)">${updatedPosts.length}</div><div class="sub">refreshed posts</div></div>
+    <div class="stat-card"><div class="label">Active Writers</div><div class="value">${activeWriters}</div><div class="sub">of ${WRITER_SLUGS.length} tracked</div></div>
+    <div class="stat-card"><div class="label">Avg Posts / Writer</div><div class="value">${avgPerWriter}</div><div class="sub">in this period</div></div>
+    <div class="stat-card"><div class="label">Most Active</div><div class="value" style="font-size:20px">${topWriter ? TRACKED_WRITERS[topWriter[0]].name : '-'}</div><div class="sub">${topWriter ? topWriter[1] + ' posts' : ''}</div></div>
+  `;
+}
+
+// ===== CHARTS =====
+function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+const chartDefaults = {
+  bar: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+    scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, y: { grid: { display: false }, ticks: { color: '#f1f5f9', font: { size: 11 } } } } },
+};
+
+function renderPostsByWriter(filtered) {
+  destroyChart('postsByWriter');
+  const counts = {};
+  WRITER_SLUGS.forEach(s => counts[s] = 0);
+  filtered.forEach(p => p.a.filter(a => WRITER_SLUGS.includes(a)).forEach(a => counts[a]++));
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+
+  charts.postsByWriter = new Chart(document.getElementById('chartPostsByWriter'), {
+    type: 'bar',
+    data: {
+      labels: sorted.map(([s]) => TRACKED_WRITERS[s].name),
+      datasets: [{ data: sorted.map(([,v]) => v), backgroundColor: sorted.map(([s]) => TRACKED_WRITERS[s].color), borderRadius: 4 }]
+    },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+      scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, y: { grid: { display: false }, ticks: { color: '#f1f5f9', font: { size: 11 } } } } }
+  });
+}
+
+function renderNewVsUpdated(filtered, from, to) {
+  destroyChart('newVsUpdated');
+  const writerNew = {}, writerUpd = {};
+  WRITER_SLUGS.forEach(s => { writerNew[s] = 0; writerUpd[s] = 0; });
+  filtered.forEach(p => {
+    const type = classifyPost(p, from, to);
+    p.a.filter(a => WRITER_SLUGS.includes(a)).forEach(a => {
+      if (type === 'new') writerNew[a]++;
+      else writerUpd[a]++;
+    });
+  });
+  const sorted = WRITER_SLUGS.slice().sort((a,b) => (writerNew[b]+writerUpd[b]) - (writerNew[a]+writerUpd[a]));
+
+  charts.newVsUpdated = new Chart(document.getElementById('chartNewVsUpdated'), {
+    type: 'bar',
+    data: {
+      labels: sorted.map(s => TRACKED_WRITERS[s].name),
+      datasets: [
+        { label: 'New', data: sorted.map(s => writerNew[s]), backgroundColor: '#22c55e', borderRadius: 4 },
+        { label: 'Updated', data: sorted.map(s => writerUpd[s]), backgroundColor: '#06b6d4', borderRadius: 4 },
+      ]
+    },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 12 } } },
+      scales: { x: { stacked: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, y: { stacked: true, grid: { display: false }, ticks: { color: '#f1f5f9', font: { size: 11 } } } } }
+  });
+}
+
+function renderMonthlyTrend(from, to) {
+  destroyChart('monthlyTrend');
+  const months = [];
+  const d = new Date(from.getFullYear(), from.getMonth(), 1);
+  const end = new Date(to.getFullYear(), to.getMonth(), 1);
+  while (d <= end) { months.push(d.toISOString().slice(0,7)); d.setMonth(d.getMonth() + 1); }
+  if (months.length > 36) { const step = Math.ceil(months.length / 36); const s = months.filter((_,i) => i % step === 0); months.length = 0; months.push(...s); }
+
+  const datasets = WRITER_SLUGS.map(slug => {
+    const data = months.map(m => ALL_POSTS.filter(p => {
+      if (!p.a.includes(slug)) return false;
+      return p.d.slice(0,7) === m || (p.u && p.u.slice(0,7) === m);
+    }).length);
+    return { label: TRACKED_WRITERS[slug].name, data, borderColor: TRACKED_WRITERS[slug].color, backgroundColor: TRACKED_WRITERS[slug].color + '33', fill: false, tension: 0.3, pointRadius: 2 };
+  });
+
+  charts.monthlyTrend = new Chart(document.getElementById('chartMonthlyTrend'), {
+    type: 'line', data: { labels: months, datasets },
+    options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 12, font: { size: 11 } } } },
+      scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', maxRotation: 45, font: { size: 10 } } }, y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } } } }
+  });
+}
+
+function renderTags(filtered) {
+  destroyChart('tags');
+  const tagCounts = {};
+  filtered.forEach(p => (p.tg||[]).forEach(t => tagCounts[t] = (tagCounts[t]||0)+1));
+  const sorted = Object.entries(tagCounts).sort((a,b) => b[1]-a[1]).slice(0,10);
+  charts.tags = new Chart(document.getElementById('chartTags'), {
+    type: 'doughnut',
+    data: {
+      labels: sorted.map(([t]) => t.replace(/-/g,' ')),
+      datasets: [{ data: sorted.map(([,v]) => v), backgroundColor: ['#6366f1','#ec4899','#f59e0b','#22c55e','#06b6d4','#ef4444','#a855f7','#14b8a6','#f97316','#84cc16'] }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12 } } } }
+  });
+}
+
+function renderWriterShare(filtered) {
+  destroyChart('writerShare');
+  const counts = {};
+  WRITER_SLUGS.forEach(s => counts[s] = 0);
+  filtered.forEach(p => p.a.filter(a => WRITER_SLUGS.includes(a)).forEach(a => counts[a]++));
+  const sorted = Object.entries(counts).filter(([,v]) => v > 0).sort((a,b) => b[1]-a[1]);
+  charts.writerShare = new Chart(document.getElementById('chartWriterShare'), {
+    type: 'pie',
+    data: {
+      labels: sorted.map(([s]) => TRACKED_WRITERS[s].name),
+      datasets: [{ data: sorted.map(([,v]) => v), backgroundColor: sorted.map(([s]) => TRACKED_WRITERS[s].color) }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12 } } } }
+  });
+}
+
+// ===== WRITER CARDS =====
+function renderWriterCards(filtered, from, to) {
+  const grid = document.getElementById('writerGrid');
+  grid.innerHTML = '';
+
+  const cardData = WRITER_SLUGS.map(slug => {
+    const writerPosts = filtered.filter(p => p.a.includes(slug));
+    const newCount = writerPosts.filter(p => classifyPost(p, from, to) === 'new').length;
+    const updCount = writerPosts.filter(p => classifyPost(p, from, to) === 'updated').length;
+    const totalAllTime = ALL_POSTS.filter(p => p.a.includes(slug)).length;
+    const dates = writerPosts.flatMap(p => [p.d, p.u].filter(Boolean)).sort().reverse();
+    return { slug, writerPosts, newCount, updCount, totalAllTime, lastActivity: dates[0] || 'N/A' };
+  }).sort((a,b) => b.writerPosts.length - a.writerPosts.length);
+
+  cardData.forEach(({ slug, writerPosts, newCount, updCount, totalAllTime, lastActivity }) => {
+    const card = document.createElement('div');
+    card.className = 'writer-card';
+    card.style.borderLeft = `4px solid ${TRACKED_WRITERS[slug].color}`;
+    card.innerHTML = `
+      <div class="name">${TRACKED_WRITERS[slug].name}</div>
+      <div class="role" style="color:${TRACKED_WRITERS[slug].color}">Last active: ${lastActivity}</div>
+      <div class="metrics">
+        <div class="metric"><div class="mv">${writerPosts.length}</div><div class="ml">Period Activity</div></div>
+        <div class="metric"><div class="mv">${totalAllTime}</div><div class="ml">All-time Posts</div></div>
+        <div class="metric"><div class="mv" style="color:var(--green)">${newCount}</div><div class="ml">New Posts</div></div>
+        <div class="metric"><div class="mv" style="color:var(--cyan)">${updCount}</div><div class="ml">Updates</div></div>
+      </div>
+    `;
+    card.addEventListener('click', () => {
+      document.getElementById('writerFilter').value = slug;
+      document.querySelectorAll('.tab')[0].click();
+      refresh();
+    });
+    grid.appendChild(card);
+  });
+}
+
+// ===== WEEKLY TIMELINE =====
+function renderTimeline() {
+  destroyChart('weeklyTimeline');
+  const { from, to } = getDateRange();
+  const weeks = [];
+  const d = new Date(from); d.setDate(d.getDate() - d.getDay());
+  while (d <= to) { weeks.push(d.toISOString().slice(0,10)); d.setDate(d.getDate() + 7); }
+  if (weeks.length > 52) { const step = Math.ceil(weeks.length / 52); const s = weeks.filter((_,i) => i % step === 0); weeks.length = 0; weeks.push(...s); }
+
+  const datasets = WRITER_SLUGS.map(slug => {
+    const data = weeks.map(w => {
+      const wStart = new Date(w); const wEnd = new Date(w); wEnd.setDate(wEnd.getDate() + 7);
+      return ALL_POSTS.filter(p => {
+        if (!p.a.includes(slug)) return false;
+        const cd = new Date(p.d); const ud = p.u ? new Date(p.u) : null;
+        return (cd >= wStart && cd < wEnd) || (ud && ud >= wStart && ud < wEnd);
+      }).length;
+    });
+    return { label: TRACKED_WRITERS[slug].name, data, backgroundColor: TRACKED_WRITERS[slug].color, borderRadius: 2 };
+  });
+
+  charts.weeklyTimeline = new Chart(document.getElementById('chartWeeklyTimeline'), {
+    type: 'bar', data: { labels: weeks, datasets },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { color: '#94a3b8', boxWidth: 12, font: { size: 11 } } } },
+      scales: {
+        x: { stacked: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8', maxRotation: 45, font: { size: 10 } } },
+        y: { stacked: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+      }
+    }
+  });
+}
+
+// ===== POSTS TABLE =====
+let currentSort = { col: 'updated', asc: false };
+
+function renderPostsTable() {
+  const filtered = getFilteredPosts();
+  const { from, to } = getDateRange();
+  const search = (document.getElementById('postSearch').value || '').toLowerCase();
+
+  let rows = filtered.map(p => ({
+    title: p.t,
+    slug: p.s,
+    author: p.a.filter(a => WRITER_SLUGS.includes(a)).map(a => TRACKED_WRITERS[a].name).join(', '),
+    date: p.d,
+    updated: p.u || '',
+    type: classifyPost(p, from, to),
+    tags: (p.tg||[]).join(', ')
+  }));
+
+  if (search) {
+    rows = rows.filter(r => r.title.toLowerCase().includes(search) || r.author.toLowerCase().includes(search) || r.tags.toLowerCase().includes(search));
+  }
+
+  rows.sort((a,b) => {
+    let va = a[currentSort.col] || '', vb = b[currentSort.col] || '';
+    va = va.toLowerCase(); vb = vb.toLowerCase();
+    if (va < vb) return currentSort.asc ? -1 : 1;
+    if (va > vb) return currentSort.asc ? 1 : -1;
+    return 0;
+  });
+
+  document.getElementById('tableCount').textContent = rows.length;
+
+  const escHtml = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  document.getElementById('postsTableBody').innerHTML = rows.map(r => `
+    <tr>
+      <td><a href="https://www.vantagecircle.com/en/blog/${r.slug}/" target="_blank" style="color:var(--accent2);text-decoration:none">${escHtml(r.title || r.slug)}</a></td>
+      <td>${escHtml(r.author)}</td>
+      <td>${r.date}</td>
+      <td>${r.updated}</td>
+      <td><span class="badge ${r.type === 'new' ? 'badge-new' : 'badge-updated'}">${r.type}</span></td>
+      <td style="color:var(--text2);font-size:11px">${escHtml(r.tags)}</td>
+    </tr>
+  `).join('');
+
+  // Update sort arrows
+  document.querySelectorAll('th[data-sort] .sort-arrow').forEach(el => el.textContent = '');
+  const activeHeader = document.querySelector(`th[data-sort="${currentSort.col}"] .sort-arrow`);
+  if (activeHeader) activeHeader.textContent = currentSort.asc ? ' \u25B2' : ' \u25BC';
+}
+
+function sortTable(col) {
+  if (currentSort.col === col) currentSort.asc = !currentSort.asc;
+  else { currentSort.col = col; currentSort.asc = true; }
+  renderPostsTable();
+}
+
+// ===== CSV EXPORT =====
+function exportCSV() {
+  const filtered = getFilteredPosts();
+  const { from, to } = getDateRange();
+  const header = 'Title,Author,Published,Updated,Type,Tags\n';
+  const rows = filtered.map(p => {
+    const type = classifyPost(p, from, to);
+    return [
+      '"' + (p.t||'').replace(/"/g,'""') + '"',
+      '"' + p.a.filter(a => WRITER_SLUGS.includes(a)).map(a => TRACKED_WRITERS[a].name).join('; ') + '"',
+      p.d, p.u || '', type,
+      '"' + (p.tg||[]).join('; ') + '"'
+    ].join(',');
+  }).join('\n');
+
+  const blob = new Blob([header + rows], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'vc-content-tracker-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+</script>
+</body>
+</html>
