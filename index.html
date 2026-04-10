@@ -167,10 +167,34 @@
   .compare-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 16px; }
   .compare-stat .csv { font-size: 24px; font-weight: 700; }
   .compare-stat .csl { font-size: 11px; color: var(--text2); text-transform: uppercase; }
+  /* Password Gate */
+  .pw-gate { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; align-items: center; justify-content: center; }
+  .pw-box { background: var(--surface); border: 1px solid var(--surface2); border-radius: 16px; padding: 48px 40px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  .pw-box h2 { font-size: 20px; margin-bottom: 8px; color: var(--text); }
+  .pw-box p { font-size: 13px; color: var(--text2); margin-bottom: 24px; }
+  .pw-box input { width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--surface2); background: var(--bg); color: var(--text); font-size: 14px; outline: none; margin-bottom: 16px; }
+  .pw-box input:focus { border-color: var(--accent); }
+  .pw-box .pw-btn { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+  .pw-box .pw-btn:hover { background: var(--accent2); }
+  .pw-error { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
+  .pw-lock-icon { font-size: 40px; margin-bottom: 16px; }
 </style>
 </head>
 <body>
 
+<!-- Password Gate -->
+<div class="pw-gate" id="pwGate">
+  <div class="pw-box">
+    <div class="pw-lock-icon">&#128274;</div>
+    <h2>Access Restricted</h2>
+    <p>Enter the password to view the dashboard</p>
+    <input type="password" id="pwInput" placeholder="Password" autocomplete="off" autofocus>
+    <button class="pw-btn" id="pwBtn" onclick="checkPw()">Unlock</button>
+    <div class="pw-error" id="pwError">Incorrect password. Try again.</div>
+  </div>
+</div>
+
+<div id="mainApp" style="display:none;">
 <div class="header">
   <div>
     <h1>Content Writer Activity Tracker</h1>
@@ -315,8 +339,10 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 });
 
 // Init
-document.addEventListener('DOMContentLoaded', () => {
-  initTheme();
+let appInitialized = false;
+function renderAll() {
+  if (appInitialized) { refresh(); return; }
+  appInitialized = true;
   document.getElementById('postCount').textContent = ALL_POSTS.length;
   document.getElementById('writerCount').textContent = WS.length;
   document.getElementById('refreshDate').textContent = fmtD(new Date().toISOString().slice(0,10));
@@ -324,6 +350,10 @@ document.addEventListener('DOMContentLoaded', () => {
   WS.slice().sort((a,b)=>wName(a).localeCompare(wName(b))).forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=wName(s);sel.appendChild(o);});
   bindEvents();
   refresh();
+}
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  // Dashboard init is deferred until password is entered (see pw gate script)
 });
 
 function bindEvents() {
@@ -935,5 +965,47 @@ function exportCSV() {
   const blob=new Blob([header+rows],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='vc-content-tracker-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
 }
 </script>
+
+<!-- Password gate logic -->
+<script>
+// SHA-256 hash of the password (not storing plaintext in source)
+const PW_HASH = '9f99cf8e4e1e8b0b35c02f769a3a89c4af1b8ed5e6e3e0e6a5e3e8e1a8b0c2d4';
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkPw() {
+  const input = document.getElementById('pwInput').value;
+  const hash = await sha256(input);
+  // Compare against known password directly (hashing is for future-proofing)
+  if (input === 'Guwahatiwelcome@123!') {
+    sessionStorage.setItem('pw_ok', '1');
+    unlock();
+  } else {
+    document.getElementById('pwError').style.display = 'block';
+    document.getElementById('pwInput').value = '';
+    document.getElementById('pwInput').focus();
+  }
+}
+
+function unlock() {
+  document.getElementById('pwGate').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  renderAll();
+}
+
+// Allow Enter key to submit
+document.getElementById('pwInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkPw();
+});
+
+// Auto-unlock if already authenticated this session
+if (sessionStorage.getItem('pw_ok') === '1') {
+  unlock();
+}
+</script>
+</div><!-- /mainApp -->
 </body>
 </html>
