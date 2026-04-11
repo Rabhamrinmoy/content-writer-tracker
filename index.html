@@ -7,6 +7,7 @@
 <title>VC Content Writer Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="./data.js"></script>
+<script src="./rankings.js"></script>
 <style>
   :root {
     --bg: #0f172a; --surface: #1e293b; --surface2: #334155;
@@ -216,6 +217,7 @@
   <div class="tab" data-tab="tags">Tag Coverage</div>
   <div class="tab" data-tab="compare">Compare</div>
   <div class="tab" data-tab="timeline">Timeline</div>
+  <div class="tab" data-tab="rankings">Rankings</div>
   <div class="tab" data-tab="posts">All Posts</div>
 </div>
 
@@ -279,6 +281,37 @@
   <div id="tab-tags" class="hidden"><div class="card"><h3>Tag Coverage Matrix — Who Writes What</h3><div class="table-scroll" id="tagMatrixBody"></div></div></div>
   <div id="tab-compare" class="hidden"><div id="compareBody"></div></div>
   <div id="tab-timeline" class="hidden"><div class="chart-card"><h3>Weekly Publishing Timeline</h3><canvas id="chartWeeklyTimeline" style="max-height:500px"></canvas></div></div>
+  <div id="tab-rankings" class="hidden">
+    <div class="rank-controls" style="display:flex;gap:12px;margin-bottom:20px;align-items:center;flex-wrap:wrap;">
+      <div class="filter-group">
+        <label>Country</label>
+        <select id="rankCountry" style="background:var(--bg);color:var(--text);border:1px solid var(--surface2);border-radius:6px;padding:8px 12px;font-size:13px;">
+          <option value="both">US & India</option>
+          <option value="usa">United States</option>
+          <option value="ind">India</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>View</label>
+        <select id="rankView" style="background:var(--bg);color:var(--text);border:1px solid var(--surface2);border-radius:6px;padding:8px 12px;font-size:13px;">
+          <option value="pages">Top Pages</option>
+          <option value="keywords">Top Keywords</option>
+        </select>
+      </div>
+      <div style="margin-left:auto;color:var(--text2);font-size:12px;">Data from Google Search Console &middot; <span id="rankPeriod"></span></div>
+    </div>
+    <div class="stats-row" id="rankStats"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px;" id="rankChartsRow">
+      <div class="chart-card"><h3>Position Distribution</h3><canvas id="chartPosDist" style="max-height:280px"></canvas></div>
+      <div class="chart-card"><h3>US vs India — Clicks</h3><canvas id="chartCountryClicks" style="max-height:280px"></canvas></div>
+    </div>
+    <div class="card" style="margin-top:20px;">
+      <h3 id="rankTableTitle">Top Ranking Blog Pages</h3>
+      <div class="table-scroll">
+        <table><thead id="rankTableHead"></thead><tbody id="rankTableBody"></tbody></table>
+      </div>
+    </div>
+  </div>
   <div id="tab-posts" class="hidden">
     <div class="card">
       <h3><span>All Posts (<span id="tableCount">0</span>)</span><input type="text" class="search-box" id="postSearch" placeholder="Search title, author, or tag..."></h3>
@@ -313,7 +346,7 @@ const TRACKED_WRITERS = {
 const WS = Object.keys(TRACKED_WRITERS);
 let ALL_POSTS = typeof EMBEDDED_DATA !== 'undefined' ? EMBEDDED_DATA : [];
 let charts = {};
-const ALL_TABS = ['overview','leaderboard','alerts','activity','calendar','writers','tags','compare','timeline','posts'];
+const ALL_TABS = ['overview','leaderboard','alerts','activity','calendar','writers','tags','compare','timeline','rankings','posts'];
 
 const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 // Resolve CSS variable to actual color value for Chart.js
@@ -388,6 +421,7 @@ function renderActiveTab(tab) {
   if(tab==='alerts') renderAlerts();
   if(tab==='tags') renderTagMatrix();
   if(tab==='compare') renderCompare();
+  if(tab==='rankings') renderRankings();
 }
 
 // Filtering
@@ -941,6 +975,147 @@ function renderTimeline() {
   if(weeks.length>52){const step=Math.ceil(weeks.length/52);const s=weeks.filter((_,i)=>i%step===0);weeks.length=0;weeks.push(...s);}
   const ds=WS.map(slug=>{const data=weeks.map(w=>{const ws=new Date(w),we=new Date(w);we.setDate(we.getDate()+7);return ALL_POSTS.filter(p=>{if(!p.a.includes(slug))return false;const cd=new Date(p.d),ud=p.u?new Date(p.u):null;return(cd>=ws&&cd<we)||(ud&&ud>=ws&&ud<we);}).length;});return{label:wName(slug),data,backgroundColor:wColor(slug),borderRadius:2};});
   charts.weeklyTimeline=new Chart(document.getElementById('chartWeeklyTimeline'),{type:'bar',data:{labels:weeks,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:cv('--text2'),boxWidth:12,font:{size:11}}}},scales:{x:{stacked:true,grid:{color:cv('--surface2')},ticks:{color:cv('--text2'),maxRotation:45,font:{size:10}}},y:{stacked:true,grid:{color:cv('--surface2')},ticks:{color:cv('--text2')}}}}});
+}
+
+// === RANK TRACKER ===
+function renderRankings() {
+  if(typeof RANKINGS_DATA === 'undefined') { document.getElementById('rankStats').innerHTML='<p style="color:var(--text2)">Rankings data not available.</p>'; return; }
+  const R = RANKINGS_DATA;
+  const country = document.getElementById('rankCountry').value;
+  const view = document.getElementById('rankView').value;
+  document.getElementById('rankPeriod').textContent = R.period + ' (as of ' + R.generated + ')';
+
+  // Bind change events once
+  if(!renderRankings._bound) {
+    renderRankings._bound = true;
+    document.getElementById('rankCountry').addEventListener('change', renderRankings);
+    document.getElementById('rankView').addEventListener('change', renderRankings);
+  }
+
+  // Aggregate stats
+  function getPages(c) { return R.pages[c] || []; }
+  function getKws(c) { return R.keywords[c] || []; }
+  const countries = country === 'both' ? ['usa','ind'] : [country];
+  let totalClicks=0, totalImpr=0, totalPages=0, posSum=0, posCount=0, top10=0;
+  countries.forEach(c => {
+    getPages(c).forEach(p => { totalClicks+=p.c; totalImpr+=p.i; totalPages++; posSum+=p.pos; posCount++; if(p.pos<=10) top10++; });
+  });
+  const avgPos = posCount ? (posSum/posCount).toFixed(1) : '-';
+  const ctrAvg = totalImpr ? ((totalClicks/totalImpr)*100).toFixed(2) : '0';
+  const cLabels = {usa:'US',ind:'India',both:'US & India'};
+
+  document.getElementById('rankStats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Blog Pages Ranking (${cLabels[country]})</div><div class="stat-value" style="color:var(--accent)">${totalPages}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Clicks</div><div class="stat-value" style="color:var(--green)">${totalClicks.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Impressions</div><div class="stat-value" style="color:var(--cyan)">${totalImpr.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="stat-label">Avg Position</div><div class="stat-value" style="color:${parseFloat(avgPos)<=10?'var(--green)':parseFloat(avgPos)<=20?'var(--orange)':'var(--red)'}">${avgPos}</div></div>
+    <div class="stat-card"><div class="stat-label">Top 10 Pages</div><div class="stat-value" style="color:var(--green)">${top10}</div></div>
+    <div class="stat-card"><div class="stat-label">Avg CTR</div><div class="stat-value" style="color:var(--accent2)">${ctrAvg}%</div></div>
+  `;
+
+  // Position Distribution Chart
+  destroyChart('posDist');
+  const posBuckets = {'1-3':0,'4-10':0,'11-20':0,'21-50':0,'50+':0};
+  countries.forEach(c => {
+    getPages(c).forEach(p => {
+      if(p.pos<=3) posBuckets['1-3']++;
+      else if(p.pos<=10) posBuckets['4-10']++;
+      else if(p.pos<=20) posBuckets['11-20']++;
+      else if(p.pos<=50) posBuckets['21-50']++;
+      else posBuckets['50+']++;
+    });
+  });
+  charts.posDist = new Chart(document.getElementById('chartPosDist'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(posBuckets),
+      datasets: [{
+        data: Object.values(posBuckets),
+        backgroundColor: [cv('--green'), cv('--cyan'), cv('--orange'), cv('--pink'), cv('--red')],
+        borderWidth: 0
+      }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ color:cv('--text2'), padding:12, font:{size:11} }}}}
+  });
+
+  // Country Clicks Comparison Chart
+  destroyChart('countryClicks');
+  const usaPages = R.pages.usa || [];
+  const indPages = R.pages.ind || [];
+  // Get top 10 pages by combined clicks
+  const slugMap = {};
+  [...usaPages,...indPages].forEach(p => {
+    if(!slugMap[p.p]) slugMap[p.p] = {usa:0,ind:0};
+    slugMap[p.p][usaPages.includes(p)?'usa':'ind'] = p.c;
+  });
+  usaPages.forEach(p => { if(!slugMap[p.p]) slugMap[p.p]={usa:0,ind:0}; slugMap[p.p].usa=p.c; });
+  indPages.forEach(p => { if(!slugMap[p.p]) slugMap[p.p]={usa:0,ind:0}; slugMap[p.p].ind=p.c; });
+  const topSlugs = Object.entries(slugMap).sort((a,b)=>(b[1].usa+b[1].ind)-(a[1].usa+a[1].ind)).slice(0,10);
+  const shortLabel = s => s.length>25 ? s.slice(0,25)+'…' : s;
+  charts.countryClicks = new Chart(document.getElementById('chartCountryClicks'), {
+    type: 'bar',
+    data: {
+      labels: topSlugs.map(s => shortLabel(s[0])),
+      datasets: [
+        { label:'US', data:topSlugs.map(s=>s[1].usa), backgroundColor:cv('--accent'), borderRadius:3 },
+        { label:'India', data:topSlugs.map(s=>s[1].ind), backgroundColor:cv('--orange'), borderRadius:3 }
+      ]
+    },
+    options: { indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ color:cv('--text2'),font:{size:11} }}}, scales:{ x:{ grid:{color:cv('--surface2')}, ticks:{color:cv('--text2')} }, y:{ grid:{display:false}, ticks:{color:cv('--text2'),font:{size:10}} }}}
+  });
+
+  // Table
+  if(view === 'pages') {
+    document.getElementById('rankTableTitle').textContent = 'Top Ranking Blog Pages (' + cLabels[country] + ')';
+    document.getElementById('rankTableHead').innerHTML = '<tr><th style="text-align:left">Page</th><th>Clicks</th><th>Impressions</th><th>CTR</th><th>Avg Position</th></tr>';
+    let rows = [];
+    if(country === 'both') {
+      // Merge and show country column
+      document.getElementById('rankTableHead').innerHTML = '<tr><th style="text-align:left">Page</th><th>Country</th><th>Clicks</th><th>Impressions</th><th>CTR</th><th>Avg Position</th></tr>';
+      countries.forEach(c => getPages(c).forEach(p => rows.push({...p, country:c})));
+      rows.sort((a,b) => b.c - a.c);
+    } else {
+      rows = getPages(country).map(p => ({...p, country}));
+    }
+    const posColor = pos => pos<=3?'var(--green)':pos<=10?'var(--cyan)':pos<=20?'var(--orange)':pos<=50?'var(--pink)':'var(--red)';
+    const cFlag = c => c==='usa'?'🇺🇸 US':'🇮🇳 India';
+    document.getElementById('rankTableBody').innerHTML = rows.map(r => {
+      const url = 'https://www.vantagecircle.com/en/blog/' + r.p + '/';
+      const countryCol = country==='both' ? `<td style="text-align:center">${cFlag(r.country)}</td>` : '';
+      return `<tr>
+        <td><a href="${url}" target="_blank" style="color:var(--accent2);text-decoration:none">${esc(r.p)}</a></td>
+        ${countryCol}
+        <td style="text-align:center;font-weight:600">${r.c}</td>
+        <td style="text-align:center;color:var(--text2)">${r.i.toLocaleString()}</td>
+        <td style="text-align:center">${r.ctr}%</td>
+        <td style="text-align:center;font-weight:700;color:${posColor(r.pos)}">${r.pos}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    document.getElementById('rankTableTitle').textContent = 'Top Keywords (' + cLabels[country] + ')';
+    let rows = [];
+    if(country === 'both') {
+      document.getElementById('rankTableHead').innerHTML = '<tr><th style="text-align:left">Keyword</th><th>Country</th><th>Clicks</th><th>Impressions</th><th>CTR</th><th>Avg Position</th></tr>';
+      countries.forEach(c => getKws(c).forEach(k => rows.push({...k, country:c})));
+      rows.sort((a,b) => b.c - a.c);
+    } else {
+      document.getElementById('rankTableHead').innerHTML = '<tr><th style="text-align:left">Keyword</th><th>Clicks</th><th>Impressions</th><th>CTR</th><th>Avg Position</th></tr>';
+      rows = getKws(country).map(k => ({...k, country}));
+    }
+    const posColor = pos => pos<=3?'var(--green)':pos<=10?'var(--cyan)':pos<=20?'var(--orange)':pos<=50?'var(--pink)':'var(--red)';
+    const cFlag = c => c==='usa'?'🇺🇸 US':'🇮🇳 India';
+    document.getElementById('rankTableBody').innerHTML = rows.map(r => {
+      const countryCol = country==='both' ? `<td style="text-align:center">${cFlag(r.country)}</td>` : '';
+      return `<tr>
+        <td style="color:var(--text)">${esc(r.q)}</td>
+        ${countryCol}
+        <td style="text-align:center;font-weight:600">${r.c}</td>
+        <td style="text-align:center;color:var(--text2)">${r.i.toLocaleString()}</td>
+        <td style="text-align:center">${r.ctr}%</td>
+        <td style="text-align:center;font-weight:700;color:${posColor(r.pos)}">${r.pos}</td>
+      </tr>`;
+    }).join('');
+  }
 }
 
 // === POSTS TABLE ===
