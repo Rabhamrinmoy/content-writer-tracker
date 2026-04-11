@@ -983,6 +983,7 @@ function renderRankings() {
   const R = RANKINGS_DATA;
   const country = document.getElementById('rankCountry').value;
   const view = document.getElementById('rankView').value;
+  const writerFilter = document.getElementById('writerFilter').value;
   document.getElementById('rankPeriod').textContent = R.period + ' (as of ' + R.generated + ')';
 
   // Bind change events once
@@ -992,8 +993,28 @@ function renderRankings() {
     document.getElementById('rankView').addEventListener('change', renderRankings);
   }
 
+  // Build slug-to-authors lookup from blog data
+  const slugAuthors = {};
+  ALL_POSTS.forEach(p => { slugAuthors[p.s] = p.a; });
+
+  // Match ranking slug (may be truncated) to a blog post author
+  function getAuthorsForSlug(rankSlug) {
+    if(slugAuthors[rankSlug]) return slugAuthors[rankSlug];
+    // Try partial match (GSC truncates long slugs)
+    for(const s in slugAuthors) {
+      if(s.startsWith(rankSlug) || rankSlug.startsWith(s)) return slugAuthors[s];
+    }
+    return [];
+  }
+
+  // Filter pages by writer
+  function filterByWriter(pages) {
+    if(writerFilter === 'all') return pages;
+    return pages.filter(p => getAuthorsForSlug(p.p).includes(writerFilter));
+  }
+
   // Aggregate stats
-  function getPages(c) { return R.pages[c] || []; }
+  function getPages(c) { return filterByWriter(R.pages[c] || []); }
   function getKws(c) { return R.keywords[c] || []; }
   const countries = country === 'both' ? ['usa','ind'] : [country];
   let totalClicks=0, totalImpr=0, totalPages=0, posSum=0, posCount=0, top10=0;
@@ -1003,9 +1024,10 @@ function renderRankings() {
   const avgPos = posCount ? (posSum/posCount).toFixed(1) : '-';
   const ctrAvg = totalImpr ? ((totalClicks/totalImpr)*100).toFixed(2) : '0';
   const cLabels = {usa:'US',ind:'India',both:'US & India'};
+  const writerLabel = writerFilter !== 'all' ? ' — ' + wName(writerFilter) : '';
 
   document.getElementById('rankStats').innerHTML = `
-    <div class="stat-card"><div class="stat-label">Blog Pages Ranking (${cLabels[country]})</div><div class="stat-value" style="color:var(--accent)">${totalPages}</div></div>
+    <div class="stat-card"><div class="stat-label">Blog Pages Ranking (${cLabels[country]}${writerLabel})</div><div class="stat-value" style="color:var(--accent)">${totalPages}</div></div>
     <div class="stat-card"><div class="stat-label">Total Clicks</div><div class="stat-value" style="color:var(--green)">${totalClicks.toLocaleString()}</div></div>
     <div class="stat-card"><div class="stat-label">Total Impressions</div><div class="stat-value" style="color:var(--cyan)">${totalImpr.toLocaleString()}</div></div>
     <div class="stat-card"><div class="stat-label">Avg Position</div><div class="stat-value" style="color:${parseFloat(avgPos)<=10?'var(--green)':parseFloat(avgPos)<=20?'var(--orange)':'var(--red)'}">${avgPos}</div></div>
@@ -1040,14 +1062,10 @@ function renderRankings() {
 
   // Country Clicks Comparison Chart
   destroyChart('countryClicks');
-  const usaPages = R.pages.usa || [];
-  const indPages = R.pages.ind || [];
+  const usaPages = filterByWriter(R.pages.usa || []);
+  const indPages = filterByWriter(R.pages.ind || []);
   // Get top 10 pages by combined clicks
   const slugMap = {};
-  [...usaPages,...indPages].forEach(p => {
-    if(!slugMap[p.p]) slugMap[p.p] = {usa:0,ind:0};
-    slugMap[p.p][usaPages.includes(p)?'usa':'ind'] = p.c;
-  });
   usaPages.forEach(p => { if(!slugMap[p.p]) slugMap[p.p]={usa:0,ind:0}; slugMap[p.p].usa=p.c; });
   indPages.forEach(p => { if(!slugMap[p.p]) slugMap[p.p]={usa:0,ind:0}; slugMap[p.p].ind=p.c; });
   const topSlugs = Object.entries(slugMap).sort((a,b)=>(b[1].usa+b[1].ind)-(a[1].usa+a[1].ind)).slice(0,10);
@@ -1066,12 +1084,16 @@ function renderRankings() {
 
   // Table
   if(view === 'pages') {
-    document.getElementById('rankTableTitle').textContent = 'Top Ranking Blog Pages (' + cLabels[country] + ')';
-    document.getElementById('rankTableHead').innerHTML = '<tr><th style="text-align:left">Page</th><th>Clicks</th><th>Impressions</th><th>CTR</th><th>Avg Position</th></tr>';
+    document.getElementById('rankTableTitle').textContent = 'Top Ranking Blog Pages (' + cLabels[country] + writerLabel + ')';
+    const showAuthor = writerFilter === 'all';
+    const authorTh = showAuthor ? '<th>Author</th>' : '';
+    if(country === 'both') {
+      document.getElementById('rankTableHead').innerHTML = '<tr><th style="text-align:left">Page</th>'+authorTh+'<th>Country</th><th>Clicks</th><th>Impressions</th><th>CTR</th><th>Avg Position</th></tr>';
+    } else {
+      document.getElementById('rankTableHead').innerHTML = '<tr><th style="text-align:left">Page</th>'+authorTh+'<th>Clicks</th><th>Impressions</th><th>CTR</th><th>Avg Position</th></tr>';
+    }
     let rows = [];
     if(country === 'both') {
-      // Merge and show country column
-      document.getElementById('rankTableHead').innerHTML = '<tr><th style="text-align:left">Page</th><th>Country</th><th>Clicks</th><th>Impressions</th><th>CTR</th><th>Avg Position</th></tr>';
       countries.forEach(c => getPages(c).forEach(p => rows.push({...p, country:c})));
       rows.sort((a,b) => b.c - a.c);
     } else {
@@ -1081,9 +1103,12 @@ function renderRankings() {
     const cFlag = c => c==='usa'?'🇺🇸 US':'🇮🇳 India';
     document.getElementById('rankTableBody').innerHTML = rows.map(r => {
       const url = 'https://www.vantagecircle.com/en/blog/' + r.p + '/';
+      const authors = getAuthorsForSlug(r.p).filter(a=>WS.includes(a)).map(a=>wName(a)).join(', ');
+      const authorCol = showAuthor ? `<td style="white-space:nowrap;font-size:12px">${esc(authors)}</td>` : '';
       const countryCol = country==='both' ? `<td style="text-align:center">${cFlag(r.country)}</td>` : '';
       return `<tr>
         <td><a href="${url}" target="_blank" style="color:var(--accent2);text-decoration:none">${esc(r.p)}</a></td>
+        ${authorCol}
         ${countryCol}
         <td style="text-align:center;font-weight:600">${r.c}</td>
         <td style="text-align:center;color:var(--text2)">${r.i.toLocaleString()}</td>
