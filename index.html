@@ -218,6 +218,7 @@
   <div class="tab" data-tab="compare">Compare</div>
   <div class="tab" data-tab="timeline">Timeline</div>
   <div class="tab" data-tab="rankings">Rankings</div>
+  <div class="tab" data-tab="other-authors">Other Authors</div>
   <div class="tab" data-tab="posts">All Posts</div>
 </div>
 
@@ -312,6 +313,20 @@
       </div>
     </div>
   </div>
+  <div id="tab-other-authors" class="hidden">
+    <div style="display:flex;gap:12px;margin-bottom:20px;align-items:center;flex-wrap:wrap;">
+      <input type="text" id="otherAuthorsSearch" placeholder="Search by author, title, or tag..." style="flex:1;min-width:200px;padding:10px 14px;border-radius:8px;border:1px solid var(--surface2);background:var(--bg);color:var(--text);font-size:13px;">
+      <select id="otherAuthorSort" style="padding:10px 14px;border-radius:8px;border:1px solid var(--surface2);background:var(--bg);color:var(--text);font-size:13px;">
+        <option value="posts-desc">Most Posts</option>
+        <option value="posts-asc">Fewest Posts</option>
+        <option value="name-asc">Name A–Z</option>
+        <option value="recent">Most Recently Updated</option>
+        <option value="stale">Most Stale First</option>
+      </select>
+    </div>
+    <div class="stats-row" id="otherAuthorsStats"></div>
+    <div id="otherAuthorsBody"></div>
+  </div>
   <div id="tab-posts" class="hidden">
     <div class="card">
       <h3><span>All Posts (<span id="tableCount">0</span>)</span><input type="text" class="search-box" id="postSearch" placeholder="Search title, author, or tag..."></h3>
@@ -346,7 +361,7 @@ const TRACKED_WRITERS = {
 const WS = Object.keys(TRACKED_WRITERS);
 let ALL_POSTS = typeof EMBEDDED_DATA !== 'undefined' ? EMBEDDED_DATA : [];
 let charts = {};
-const ALL_TABS = ['overview','leaderboard','alerts','activity','calendar','writers','tags','compare','timeline','rankings','posts'];
+const ALL_TABS = ['overview','leaderboard','alerts','activity','calendar','writers','tags','compare','timeline','rankings','other-authors','posts'];
 
 const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 // Resolve CSS variable to actual color value for Chart.js
@@ -422,6 +437,7 @@ function renderActiveTab(tab) {
   if(tab==='tags') renderTagMatrix();
   if(tab==='compare') renderCompare();
   if(tab==='rankings') renderRankings();
+  if(tab==='other-authors') renderOtherAuthors();
 }
 
 // Filtering
@@ -1145,6 +1161,127 @@ function renderRankings() {
 
 // === POSTS TABLE ===
 let currentSort={col:'updated',asc:false};
+// === OTHER AUTHORS TAB ===
+function renderOtherAuthors() {
+  const search = (document.getElementById('otherAuthorsSearch').value || '').toLowerCase();
+  const sortMode = document.getElementById('otherAuthorSort').value;
+  const now = new Date();
+
+  // Build map of non-tracked authors -> posts
+  const authorMap = {};
+  ALL_POSTS.forEach(p => {
+    (p.a || []).forEach(a => {
+      if (WS.includes(a)) return; // skip tracked writers
+      if (a === 'vceditorialteam') return; // skip editorial team
+      if (!authorMap[a]) authorMap[a] = [];
+      authorMap[a].push(p);
+    });
+  });
+
+  // Build author summary objects
+  let authors = Object.keys(authorMap).map(slug => {
+    const posts = authorMap[slug];
+    const dates = posts.map(p => p.u || p.d).filter(Boolean).sort();
+    const lastUpdated = dates.length ? dates[dates.length - 1] : '';
+    const daysSince = lastUpdated ? Math.floor((now - new Date(lastUpdated)) / 86400000) : 9999;
+    return { slug, name: wName(slug), posts, count: posts.length, lastUpdated, daysSince };
+  });
+
+  // Filter by search
+  if (search) {
+    authors = authors.filter(a =>
+      a.name.toLowerCase().includes(search) ||
+      a.posts.some(p => (p.t || '').toLowerCase().includes(search) || (p.tg || []).some(t => t.toLowerCase().includes(search)))
+    );
+  }
+
+  // Sort
+  if (sortMode === 'posts-desc') authors.sort((a, b) => b.count - a.count);
+  else if (sortMode === 'posts-asc') authors.sort((a, b) => a.count - b.count);
+  else if (sortMode === 'name-asc') authors.sort((a, b) => a.name.localeCompare(b.name));
+  else if (sortMode === 'recent') authors.sort((a, b) => (b.lastUpdated || '').localeCompare(a.lastUpdated || ''));
+  else if (sortMode === 'stale') authors.sort((a, b) => b.daysSince - a.daysSince);
+
+  // Stats
+  const totalAuthors = authors.length;
+  const totalPosts = authors.reduce((s, a) => s + a.count, 0);
+  const staleCount = authors.reduce((s, a) => s + a.posts.filter(p => { const d = p.u || p.d; return d && Math.floor((now - new Date(d)) / 86400000) > 365; }).length, 0);
+  const noUpdateCount = authors.reduce((s, a) => s + a.posts.filter(p => !p.u || p.u === p.d).length, 0);
+
+  document.getElementById('otherAuthorsStats').innerHTML = `
+    <div class="stat-card"><div class="label">Other Authors</div><div class="value" style="color:var(--accent2)">${totalAuthors}</div><div class="sub">non-tracked contributors</div></div>
+    <div class="stat-card"><div class="label">Total Posts</div><div class="value" style="color:var(--purple)">${totalPosts}</div><div class="sub">across all other authors</div></div>
+    <div class="stat-card"><div class="label">Stale Posts</div><div class="value" style="color:var(--orange)">${staleCount}</div><div class="sub">not updated in 12+ months</div></div>
+    <div class="stat-card"><div class="label">Never Updated</div><div class="value" style="color:var(--red)">${noUpdateCount}</div><div class="sub">no update since publish</div></div>
+  `;
+
+  // Render author accordion cards
+  let html = '';
+  authors.forEach(a => {
+    const sortedPosts = [...a.posts].sort((x, y) => (y.u || y.d || '').localeCompare(x.u || x.d || ''));
+    const stalePosts = sortedPosts.filter(p => { const d = p.u || p.d; return d && Math.floor((now - new Date(d)) / 86400000) > 365; }).length;
+    const staleBar = a.count > 0 ? Math.round((stalePosts / a.count) * 100) : 0;
+
+    let statusColor = 'var(--green)';
+    let statusLabel = 'Active';
+    if (a.daysSince > 365) { statusColor = 'var(--red)'; statusLabel = 'Inactive 1y+'; }
+    else if (a.daysSince > 180) { statusColor = 'var(--orange)'; statusLabel = 'Inactive 6m+'; }
+    else if (a.daysSince > 90) { statusColor = 'var(--yellow, #eab308)'; statusLabel = 'Inactive 3m+'; }
+
+    html += `<div class="card" style="margin-bottom:16px;">
+      <div class="oa-header" data-slug="${a.slug}" style="cursor:pointer;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <strong style="font-size:15px;color:var(--text)">${esc(a.name)}</strong>
+        <span class="badge" style="background:var(--purple);font-size:11px">${a.count} post${a.count !== 1 ? 's' : ''}</span>
+        <span style="font-size:11px;color:${statusColor};font-weight:600">${statusLabel}</span>
+        ${stalePosts > 0 ? `<span style="font-size:11px;color:var(--orange)">${stalePosts} stale</span>` : ''}
+        <span style="margin-left:auto;font-size:11px;color:var(--text2)">Last active: ${a.lastUpdated ? fmtD(a.lastUpdated) : 'Unknown'}</span>
+        <span class="oa-chevron" style="font-size:14px;color:var(--text2);transition:transform .2s">&#9660;</span>
+      </div>
+      ${stalePosts > 0 ? `<div style="margin-top:8px;height:4px;border-radius:2px;background:var(--surface2);overflow:hidden"><div style="width:${staleBar}%;height:100%;background:var(--orange);border-radius:2px"></div></div><div style="font-size:10px;color:var(--text2);margin-top:2px">${staleBar}% stale</div>` : ''}
+      <div class="oa-posts" data-for="${a.slug}" style="display:none;margin-top:12px;">
+        <div class="table-scroll">
+          <table><thead><tr>
+            <th>Title</th><th>Published</th><th>Last Updated</th><th>Age</th><th>Status</th><th>Tags</th>
+          </tr></thead><tbody>
+          ${sortedPosts.map(p => {
+            const d = p.u || p.d;
+            const age = d ? Math.floor((now - new Date(d)) / 86400000) : 9999;
+            let badge = 'badge-new'; let label = 'Fresh';
+            if (age > 365) { badge = ''; label = '🔴 Rewrite'; }
+            else if (age > 180) { badge = 'badge-updated'; label = '🟠 Review'; }
+            else { label = '🟢 OK'; }
+            const neverUpdated = !p.u || p.u === p.d;
+            return `<tr style="${age > 365 ? 'background:rgba(239,68,68,0.06)' : ''}">
+              <td><a href="https://www.vantagecircle.com/en/blog/${p.s}/" target="_blank" style="color:var(--accent2);text-decoration:none">${esc(p.t || p.s)}</a></td>
+              <td style="white-space:nowrap">${fmtD(p.d)}</td>
+              <td style="white-space:nowrap">${neverUpdated ? '<span style="color:var(--red)">Never</span>' : fmtD(p.u)}</td>
+              <td style="white-space:nowrap;font-size:12px">${age < 9999 ? age + 'd' : '—'}</td>
+              <td><span style="font-size:12px">${label}</span></td>
+              <td style="color:var(--text2);font-size:11px">${esc((p.tg || []).join(', '))}</td>
+            </tr>`;
+          }).join('')}
+          </tbody></table>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('otherAuthorsBody').innerHTML = html;
+
+  // Accordion toggle
+  document.querySelectorAll('.oa-header').forEach(h => {
+    h.addEventListener('click', () => {
+      const slug = h.dataset.slug;
+      const panel = document.querySelector(`.oa-posts[data-for="${slug}"]`);
+      const chevron = h.querySelector('.oa-chevron');
+      if (panel.style.display === 'none') { panel.style.display = 'block'; chevron.style.transform = 'rotate(180deg)'; }
+      else { panel.style.display = 'none'; chevron.style.transform = 'rotate(0deg)'; }
+    });
+  });
+}
+document.getElementById('otherAuthorsSearch').addEventListener('input', renderOtherAuthors);
+document.getElementById('otherAuthorSort').addEventListener('change', renderOtherAuthors);
+
 function renderPostsTable() {
   const f=getFiltered(),{from,to}=getDateRange(),search=(document.getElementById('postSearch').value||'').toLowerCase();
   let rows=f.map(p=>({title:p.t,slug:p.s,author:p.a.filter(a=>WS.includes(a)).map(a=>wName(a)).join(', '),date:p.d,updated:p.u||'',type:classify(p,from,to),tags:(p.tg||[]).join(', ')}));
