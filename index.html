@@ -169,36 +169,43 @@
   .compare-stat .csv { font-size: 24px; font-weight: 700; }
   .compare-stat .csl { font-size: 11px; color: var(--text2); text-transform: uppercase; }
   /* Other Authors */
-  .oa-toolbar { display:flex;gap:12px;margin-bottom:20px;align-items:center;flex-wrap:wrap; }
-  .oa-toolbar input, .oa-toolbar select { padding:10px 14px;border-radius:8px;border:1px solid var(--surface2);background:var(--bg);color:var(--text);font-size:13px;outline:none; }
+  .oa-toolbar { display:flex;gap:12px;margin-bottom:24px;align-items:center;flex-wrap:wrap; }
+  .oa-toolbar input, .oa-toolbar select { padding:10px 14px;border-radius:8px;border:1px solid var(--surface2);background:var(--bg);color:var(--text);font-size:13px;outline:none;transition:border-color .2s; }
   .oa-toolbar input:focus, .oa-toolbar select:focus { border-color:var(--accent); }
-  .oa-toolbar input { flex:1;min-width:200px; }
+  .oa-toolbar input { flex:1;min-width:220px; }
   .oa-toolbar input::placeholder { color:var(--text2); }
 
-  .oa-card { background:var(--surface);border-radius:10px;border:1px solid var(--surface2);overflow:hidden;margin-bottom:12px;transition:border-color .2s; }
-  .oa-card:hover { border-color:var(--accent); }
-  .oa-card-head { padding:16px 20px;cursor:pointer;display:flex;align-items:center;gap:12px; }
-  .oa-card-head .oa-name { font-size:14px;font-weight:700;color:var(--text); }
-  .oa-card-head .oa-meta { display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0; }
-  .oa-card-head .oa-chevron { font-size:10px;color:var(--text2);transition:transform .2s;margin-left:4px; }
-  .oa-card-head .oa-chevron.open { transform:rotate(180deg); }
-  .oa-pill { display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600; }
-  .oa-pill-count { background:rgba(99,102,241,0.12);color:var(--accent2); }
-  .oa-pill-stale { background:rgba(239,68,68,0.1);color:var(--red); }
-  .oa-pill-ok { background:rgba(34,197,94,0.1);color:var(--green); }
-  .oa-pill-warn { background:rgba(245,158,11,0.1);color:var(--orange); }
-  .oa-progress { height:3px;border-radius:2px;background:var(--surface2);margin:0 20px; }
-  .oa-progress-fill { height:100%;border-radius:2px;transition:width .3s; }
-  .oa-panel { display:none;padding:0 20px 16px; }
-  .oa-panel.open { display:block; }
-  .oa-panel table { font-size:12px; }
-  .oa-panel th { font-size:10px;padding:8px 12px; }
-  .oa-panel td { padding:8px 12px;font-size:12px; }
-  .oa-status { display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px; }
-  .oa-status-red { background:var(--red); }
-  .oa-status-orange { background:var(--orange); }
-  .oa-status-green { background:var(--green); }
-  .oa-last-active { font-size:11px;color:var(--text2);white-space:nowrap; }
+  .oa-grid { display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:16px; }
+  .oa-card { background:var(--surface);border-radius:12px;border:1px solid var(--surface2);padding:20px;transition:border-color .2s,box-shadow .2s;position:relative; }
+  .oa-card:hover { border-color:var(--accent);box-shadow:0 4px 20px rgba(99,102,241,0.08); }
+  .oa-card-top { display:flex;align-items:center;justify-content:space-between;margin-bottom:14px; }
+  .oa-name { font-size:15px;font-weight:700;color:var(--text); }
+  .oa-badge { display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px; }
+  .oa-badge-active { background:rgba(34,197,94,0.12);color:var(--green); }
+  .oa-badge-warn { background:rgba(245,158,11,0.12);color:var(--orange); }
+  .oa-badge-inactive { background:rgba(239,68,68,0.1);color:var(--red); }
+  .oa-metrics { display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px; }
+  .oa-metric { text-align:center;padding:8px 4px;background:var(--bg);border-radius:8px; }
+  .oa-metric-val { font-size:20px;font-weight:700;line-height:1.2; }
+  .oa-metric-lbl { font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-top:2px; }
+  .oa-bar-wrap { height:4px;border-radius:2px;background:var(--surface2);margin-bottom:14px;overflow:hidden; }
+  .oa-bar-fill { height:100%;border-radius:2px;transition:width .4s ease; }
+  .oa-last { font-size:11px;color:var(--text2);margin-bottom:14px; }
+  .oa-toggle-btn { width:100%;padding:8px;font-size:12px;font-weight:600;background:transparent;border:1px solid var(--surface2);color:var(--text2);border-radius:8px;cursor:pointer;transition:all .2s; }
+  .oa-toggle-btn:hover { border-color:var(--accent);color:var(--accent2); }
+  .oa-blog-list { display:none;margin-top:14px;max-height:360px;overflow-y:auto;border-top:1px solid var(--surface2);padding-top:10px; }
+  .oa-blog-list.open { display:block; }
+  .oa-blog-item { display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(148,163,184,0.08); }
+  .oa-blog-item:last-child { border-bottom:none; }
+  .oa-dot { width:7px;height:7px;border-radius:50%;flex-shrink:0; }
+  .oa-dot-red { background:var(--red); }
+  .oa-dot-orange { background:var(--orange); }
+  .oa-dot-green { background:var(--green); }
+  .oa-blog-info { flex:1;min-width:0; }
+  .oa-blog-title { font-size:12px;color:var(--accent2);text-decoration:none;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+  .oa-blog-title:hover { text-decoration:underline; }
+  .oa-blog-date { font-size:10px;color:var(--text2);margin-top:1px; }
+  .oa-blog-tag { font-size:10px;color:var(--red);font-weight:600;flex-shrink:0;white-space:nowrap; }
 
   /* Password Gate */
   .pw-gate { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; align-items: center; justify-content: center; }
@@ -355,10 +362,9 @@
         <option value="recent">Recently Updated</option>
         <option value="stale">Most Stale</option>
       </select>
-      <button class="btn btn-outline" id="oaExpandAll" style="font-size:12px;padding:8px 14px;">Expand All</button>
     </div>
-    <div class="stats-row" id="otherAuthorsStats" style="margin-bottom:20px"></div>
-    <div id="otherAuthorsBody"></div>
+    <div class="stats-row" id="otherAuthorsStats" style="margin-bottom:24px"></div>
+    <div class="oa-grid" id="otherAuthorsBody"></div>
   </div>
   <div id="tab-posts" class="hidden">
     <div class="card">
@@ -1199,6 +1205,7 @@ function renderOtherAuthors() {
   const search = (document.getElementById('otherAuthorsSearch').value || '').toLowerCase();
   const sortMode = document.getElementById('otherAuthorSort').value;
   const now = new Date();
+  const colors = ['#6366f1','#ec4899','#f59e0b','#22c55e','#06b6d4','#ef4444','#a855f7','#14b8a6','#f97316','#84cc16','#64748b','#8b5cf6','#d946ef','#0ea5e9','#10b981','#e11d48','#78716c','#facc15','#2dd4bf','#fb923c'];
 
   const authorMap = {};
   ALL_POSTS.forEach(p => {
@@ -1215,8 +1222,8 @@ function renderOtherAuthors() {
     const lastUpdated = dates.length ? dates[dates.length - 1] : '';
     const daysSince = lastUpdated ? Math.floor((now - new Date(lastUpdated)) / 86400000) : 9999;
     const stale = posts.filter(p => { const d = p.u || p.d; return d && Math.floor((now - new Date(d)) / 86400000) > 365; }).length;
-    const neverUpd = posts.filter(p => !p.u || p.u === p.d).length;
-    return { slug, name: wName(slug), posts, count: posts.length, lastUpdated, daysSince, stale, neverUpd };
+    const ok = posts.length - stale;
+    return { slug, name: wName(slug), posts, count: posts.length, lastUpdated, daysSince, stale, ok };
   });
 
   if (search) {
@@ -1235,86 +1242,68 @@ function renderOtherAuthors() {
   const totalAuthors = authors.length;
   const totalPosts = authors.reduce((s, a) => s + a.count, 0);
   const staleCount = authors.reduce((s, a) => s + a.stale, 0);
-  const noUpdateCount = authors.reduce((s, a) => s + a.neverUpd, 0);
+  const okCount = totalPosts - staleCount;
 
   document.getElementById('otherAuthorsStats').innerHTML = `
     <div class="stat-card"><div class="label">Other Authors</div><div class="value" style="color:var(--accent2)">${totalAuthors}</div><div class="sub">non-tracked contributors</div></div>
     <div class="stat-card"><div class="label">Total Posts</div><div class="value" style="color:var(--cyan)">${totalPosts}</div><div class="sub">across all other authors</div></div>
-    <div class="stat-card"><div class="label">Stale Posts</div><div class="value" style="color:var(--orange)">${staleCount}</div><div class="sub">not updated in 12+ months</div></div>
-    <div class="stat-card"><div class="label">Never Updated</div><div class="value" style="color:var(--red)">${noUpdateCount}</div><div class="sub">no update since publish</div></div>
+    <div class="stat-card"><div class="label">Need Rewrite</div><div class="value" style="color:var(--red)">${staleCount}</div><div class="sub">not updated in 12+ months</div></div>
+    <div class="stat-card"><div class="label">Up to Date</div><div class="value" style="color:var(--green)">${okCount}</div><div class="sub">updated within 12 months</div></div>
   `;
 
   let html = '';
-  authors.forEach(a => {
+  authors.forEach((a, idx) => {
+    const color = colors[idx % colors.length];
     const sortedPosts = [...a.posts].sort((x, y) => (y.u || y.d || '').localeCompare(x.u || x.d || ''));
     const stalePct = a.count > 0 ? Math.round((a.stale / a.count) * 100) : 0;
     const barColor = stalePct > 60 ? 'var(--red)' : stalePct > 30 ? 'var(--orange)' : 'var(--green)';
+    const cardId = 'oa-' + a.slug.replace(/[^a-z0-9]/g, '');
 
-    let statusPill, statusClass;
-    if (a.daysSince > 365) { statusPill = 'Inactive 1y+'; statusClass = 'oa-pill-stale'; }
-    else if (a.daysSince > 180) { statusPill = 'Inactive 6m+'; statusClass = 'oa-pill-warn'; }
-    else if (a.daysSince > 90) { statusPill = 'Inactive 3m+'; statusClass = 'oa-pill-warn'; }
-    else { statusPill = 'Active'; statusClass = 'oa-pill-ok'; }
+    let badgeClass, badgeText;
+    if (a.daysSince > 365) { badgeClass = 'oa-badge-inactive'; badgeText = 'Inactive'; }
+    else if (a.daysSince > 180) { badgeClass = 'oa-badge-warn'; badgeText = '6m+ idle'; }
+    else { badgeClass = 'oa-badge-active'; badgeText = 'Active'; }
 
-    html += `<div class="oa-card">
-      <div class="oa-card-head" data-slug="${a.slug}">
+    html += `<div class="oa-card" style="border-left:4px solid ${color}">
+      <div class="oa-card-top">
         <span class="oa-name">${esc(a.name)}</span>
-        <span class="oa-pill oa-pill-count">${a.count} post${a.count !== 1 ? 's' : ''}</span>
-        <span class="oa-pill ${statusClass}">${statusPill}</span>
-        ${a.stale > 0 ? `<span class="oa-pill oa-pill-stale">${a.stale} stale</span>` : ''}
-        <span class="oa-meta">
-          <span class="oa-last-active">${a.lastUpdated ? fmtD(a.lastUpdated) : '—'}</span>
-          <span class="oa-chevron">&#9660;</span>
-        </span>
+        <span class="oa-badge ${badgeClass}">${badgeText}</span>
       </div>
-      ${a.stale > 0 ? `<div class="oa-progress"><div class="oa-progress-fill" style="width:${stalePct}%;background:${barColor}"></div></div>` : ''}
-      <div class="oa-panel" data-for="${a.slug}">
-        <table><thead><tr>
-          <th style="text-align:left">Title</th><th>Published</th><th>Updated</th><th>Status</th>
-        </tr></thead><tbody>
+      <div class="oa-metrics">
+        <div class="oa-metric"><div class="oa-metric-val" style="color:var(--text)">${a.count}</div><div class="oa-metric-lbl">Total</div></div>
+        <div class="oa-metric"><div class="oa-metric-val" style="color:var(--red)">${a.stale}</div><div class="oa-metric-lbl">Stale</div></div>
+        <div class="oa-metric"><div class="oa-metric-val" style="color:var(--green)">${a.ok}</div><div class="oa-metric-lbl">OK</div></div>
+      </div>
+      <div class="oa-bar-wrap"><div class="oa-bar-fill" style="width:${100 - stalePct}%;background:${barColor}"></div></div>
+      <div class="oa-last">Last active: <strong style="color:var(--text)">${a.lastUpdated ? fmtD(a.lastUpdated) : 'Unknown'}</strong></div>
+      <button class="oa-toggle-btn" onclick="var l=document.getElementById('${cardId}');l.classList.toggle('open');this.textContent=l.classList.contains('open')?'Hide Blogs':'Show ${a.count} Blog${a.count!==1?'s':''}'">Show ${a.count} Blog${a.count !== 1 ? 's' : ''}</button>
+      <div class="oa-blog-list" id="${cardId}">
         ${sortedPosts.map(p => {
           const d = p.u || p.d;
           const age = d ? Math.floor((now - new Date(d)) / 86400000) : 9999;
-          let dotClass, label;
-          if (age > 365) { dotClass = 'oa-status-red'; label = 'Rewrite'; }
-          else if (age > 180) { dotClass = 'oa-status-orange'; label = 'Review'; }
-          else { dotClass = 'oa-status-green'; label = 'OK'; }
-          const neverUpdated = !p.u || p.u === p.d;
-          return `<tr${age > 365 ? ' style="background:rgba(239,68,68,0.04)"' : ''}>
-            <td style="text-align:left"><a href="https://www.vantagecircle.com/en/blog/${p.s}/" target="_blank" style="color:var(--accent2);text-decoration:none">${esc(p.t || p.s)}</a></td>
-            <td style="white-space:nowrap;text-align:center">${fmtD(p.d)}</td>
-            <td style="white-space:nowrap;text-align:center">${neverUpdated ? '<span style="color:var(--red)">Never</span>' : fmtD(p.u)}</td>
-            <td style="white-space:nowrap;text-align:center"><span class="oa-status ${dotClass}"></span>${label}</td>
-          </tr>`;
+          let dotClass, tag;
+          if (age > 365) { dotClass = 'oa-dot-red'; tag = 'Rewrite'; }
+          else if (age > 180) { dotClass = 'oa-dot-orange'; tag = 'Review'; }
+          else { dotClass = 'oa-dot-green'; tag = ''; }
+          const neverUpd = !p.u || p.u === p.d;
+          const dateStr = neverUpd ? 'Published ' + fmtD(p.d) + ' · Never updated' : 'Updated ' + fmtD(p.u);
+          return `<div class="oa-blog-item">
+            <span class="oa-dot ${dotClass}"></span>
+            <div class="oa-blog-info">
+              <a class="oa-blog-title" href="https://www.vantagecircle.com/en/blog/${p.s}/" target="_blank" title="${esc(p.t || p.s)}">${esc(p.t || p.s)}</a>
+              <div class="oa-blog-date">${dateStr}</div>
+            </div>
+            ${tag ? `<span class="oa-blog-tag">${tag}</span>` : ''}
+          </div>`;
         }).join('')}
-        </tbody></table>
       </div>
     </div>`;
   });
 
   document.getElementById('otherAuthorsBody').innerHTML = html;
-
-  // Accordion toggle
-  document.querySelectorAll('.oa-card-head').forEach(h => {
-    h.addEventListener('click', () => {
-      const slug = h.dataset.slug;
-      const panel = document.querySelector(`.oa-panel[data-for="${slug}"]`);
-      const chevron = h.querySelector('.oa-chevron');
-      panel.classList.toggle('open');
-      chevron.classList.toggle('open');
-    });
-  });
 }
 document.getElementById('otherAuthorsSearch').addEventListener('input', renderOtherAuthors);
 document.getElementById('otherAuthorSort').addEventListener('change', renderOtherAuthors);
-document.getElementById('oaExpandAll').addEventListener('click', function() {
-  const panels = document.querySelectorAll('.oa-panel');
-  const chevrons = document.querySelectorAll('.oa-card-head .oa-chevron');
-  const allOpen = [...panels].every(p => p.classList.contains('open'));
-  panels.forEach(p => allOpen ? p.classList.remove('open') : p.classList.add('open'));
-  chevrons.forEach(c => allOpen ? c.classList.remove('open') : c.classList.add('open'));
-  this.textContent = allOpen ? 'Expand All' : 'Collapse All';
-});
 
 function renderPostsTable() {
   const f=getFiltered(),{from,to}=getDateRange(),search=(document.getElementById('postSearch').value||'').toLowerCase();
