@@ -168,6 +168,38 @@
   .compare-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 16px; }
   .compare-stat .csv { font-size: 24px; font-weight: 700; }
   .compare-stat .csl { font-size: 11px; color: var(--text2); text-transform: uppercase; }
+  /* Other Authors */
+  .oa-toolbar { display:flex;gap:12px;margin-bottom:20px;align-items:center;flex-wrap:wrap; }
+  .oa-toolbar input, .oa-toolbar select { padding:10px 14px;border-radius:8px;border:1px solid var(--surface2);background:var(--bg);color:var(--text);font-size:13px;outline:none; }
+  .oa-toolbar input:focus, .oa-toolbar select:focus { border-color:var(--accent); }
+  .oa-toolbar input { flex:1;min-width:200px; }
+  .oa-toolbar input::placeholder { color:var(--text2); }
+
+  .oa-card { background:var(--surface);border-radius:10px;border:1px solid var(--surface2);overflow:hidden;margin-bottom:12px;transition:border-color .2s; }
+  .oa-card:hover { border-color:var(--accent); }
+  .oa-card-head { padding:16px 20px;cursor:pointer;display:flex;align-items:center;gap:12px; }
+  .oa-card-head .oa-name { font-size:14px;font-weight:700;color:var(--text); }
+  .oa-card-head .oa-meta { display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0; }
+  .oa-card-head .oa-chevron { font-size:10px;color:var(--text2);transition:transform .2s;margin-left:4px; }
+  .oa-card-head .oa-chevron.open { transform:rotate(180deg); }
+  .oa-pill { display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600; }
+  .oa-pill-count { background:rgba(99,102,241,0.12);color:var(--accent2); }
+  .oa-pill-stale { background:rgba(239,68,68,0.1);color:var(--red); }
+  .oa-pill-ok { background:rgba(34,197,94,0.1);color:var(--green); }
+  .oa-pill-warn { background:rgba(245,158,11,0.1);color:var(--orange); }
+  .oa-progress { height:3px;border-radius:2px;background:var(--surface2);margin:0 20px; }
+  .oa-progress-fill { height:100%;border-radius:2px;transition:width .3s; }
+  .oa-panel { display:none;padding:0 20px 16px; }
+  .oa-panel.open { display:block; }
+  .oa-panel table { font-size:12px; }
+  .oa-panel th { font-size:10px;padding:8px 12px; }
+  .oa-panel td { padding:8px 12px;font-size:12px; }
+  .oa-status { display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px; }
+  .oa-status-red { background:var(--red); }
+  .oa-status-orange { background:var(--orange); }
+  .oa-status-green { background:var(--green); }
+  .oa-last-active { font-size:11px;color:var(--text2);white-space:nowrap; }
+
   /* Password Gate */
   .pw-gate { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; align-items: center; justify-content: center; }
   .pw-box { background: var(--surface); border: 1px solid var(--surface2); border-radius: 16px; padding: 48px 40px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
@@ -314,17 +346,18 @@
     </div>
   </div>
   <div id="tab-other-authors" class="hidden">
-    <div style="display:flex;gap:12px;margin-bottom:20px;align-items:center;flex-wrap:wrap;">
-      <input type="text" id="otherAuthorsSearch" placeholder="Search by author, title, or tag..." style="flex:1;min-width:200px;padding:10px 14px;border-radius:8px;border:1px solid var(--surface2);background:var(--bg);color:var(--text);font-size:13px;">
-      <select id="otherAuthorSort" style="padding:10px 14px;border-radius:8px;border:1px solid var(--surface2);background:var(--bg);color:var(--text);font-size:13px;">
+    <div class="oa-toolbar">
+      <input type="text" id="otherAuthorsSearch" placeholder="Search author, title, or tag...">
+      <select id="otherAuthorSort">
         <option value="posts-desc">Most Posts</option>
         <option value="posts-asc">Fewest Posts</option>
         <option value="name-asc">Name A–Z</option>
-        <option value="recent">Most Recently Updated</option>
-        <option value="stale">Most Stale First</option>
+        <option value="recent">Recently Updated</option>
+        <option value="stale">Most Stale</option>
       </select>
+      <button class="btn btn-outline" id="oaExpandAll" style="font-size:12px;padding:8px 14px;">Expand All</button>
     </div>
-    <div class="stats-row" id="otherAuthorsStats"></div>
+    <div class="stats-row" id="otherAuthorsStats" style="margin-bottom:20px"></div>
     <div id="otherAuthorsBody"></div>
   </div>
   <div id="tab-posts" class="hidden">
@@ -1167,27 +1200,25 @@ function renderOtherAuthors() {
   const sortMode = document.getElementById('otherAuthorSort').value;
   const now = new Date();
 
-  // Build map of non-tracked authors -> posts
   const authorMap = {};
   ALL_POSTS.forEach(p => {
     (p.a || []).forEach(a => {
-      if (WS.includes(a)) return; // skip tracked writers
-      if (a === 'vceditorialteam') return; // skip editorial team
+      if (WS.includes(a) || a === 'vceditorialteam') return;
       if (!authorMap[a]) authorMap[a] = [];
       authorMap[a].push(p);
     });
   });
 
-  // Build author summary objects
   let authors = Object.keys(authorMap).map(slug => {
     const posts = authorMap[slug];
     const dates = posts.map(p => p.u || p.d).filter(Boolean).sort();
     const lastUpdated = dates.length ? dates[dates.length - 1] : '';
     const daysSince = lastUpdated ? Math.floor((now - new Date(lastUpdated)) / 86400000) : 9999;
-    return { slug, name: wName(slug), posts, count: posts.length, lastUpdated, daysSince };
+    const stale = posts.filter(p => { const d = p.u || p.d; return d && Math.floor((now - new Date(d)) / 86400000) > 365; }).length;
+    const neverUpd = posts.filter(p => !p.u || p.u === p.d).length;
+    return { slug, name: wName(slug), posts, count: posts.length, lastUpdated, daysSince, stale, neverUpd };
   });
 
-  // Filter by search
   if (search) {
     authors = authors.filter(a =>
       a.name.toLowerCase().includes(search) ||
@@ -1195,73 +1226,68 @@ function renderOtherAuthors() {
     );
   }
 
-  // Sort
   if (sortMode === 'posts-desc') authors.sort((a, b) => b.count - a.count);
   else if (sortMode === 'posts-asc') authors.sort((a, b) => a.count - b.count);
   else if (sortMode === 'name-asc') authors.sort((a, b) => a.name.localeCompare(b.name));
   else if (sortMode === 'recent') authors.sort((a, b) => (b.lastUpdated || '').localeCompare(a.lastUpdated || ''));
   else if (sortMode === 'stale') authors.sort((a, b) => b.daysSince - a.daysSince);
 
-  // Stats
   const totalAuthors = authors.length;
   const totalPosts = authors.reduce((s, a) => s + a.count, 0);
-  const staleCount = authors.reduce((s, a) => s + a.posts.filter(p => { const d = p.u || p.d; return d && Math.floor((now - new Date(d)) / 86400000) > 365; }).length, 0);
-  const noUpdateCount = authors.reduce((s, a) => s + a.posts.filter(p => !p.u || p.u === p.d).length, 0);
+  const staleCount = authors.reduce((s, a) => s + a.stale, 0);
+  const noUpdateCount = authors.reduce((s, a) => s + a.neverUpd, 0);
 
   document.getElementById('otherAuthorsStats').innerHTML = `
     <div class="stat-card"><div class="label">Other Authors</div><div class="value" style="color:var(--accent2)">${totalAuthors}</div><div class="sub">non-tracked contributors</div></div>
-    <div class="stat-card"><div class="label">Total Posts</div><div class="value" style="color:var(--purple)">${totalPosts}</div><div class="sub">across all other authors</div></div>
+    <div class="stat-card"><div class="label">Total Posts</div><div class="value" style="color:var(--cyan)">${totalPosts}</div><div class="sub">across all other authors</div></div>
     <div class="stat-card"><div class="label">Stale Posts</div><div class="value" style="color:var(--orange)">${staleCount}</div><div class="sub">not updated in 12+ months</div></div>
     <div class="stat-card"><div class="label">Never Updated</div><div class="value" style="color:var(--red)">${noUpdateCount}</div><div class="sub">no update since publish</div></div>
   `;
 
-  // Render author accordion cards
   let html = '';
   authors.forEach(a => {
     const sortedPosts = [...a.posts].sort((x, y) => (y.u || y.d || '').localeCompare(x.u || x.d || ''));
-    const stalePosts = sortedPosts.filter(p => { const d = p.u || p.d; return d && Math.floor((now - new Date(d)) / 86400000) > 365; }).length;
-    const staleBar = a.count > 0 ? Math.round((stalePosts / a.count) * 100) : 0;
+    const stalePct = a.count > 0 ? Math.round((a.stale / a.count) * 100) : 0;
+    const barColor = stalePct > 60 ? 'var(--red)' : stalePct > 30 ? 'var(--orange)' : 'var(--green)';
 
-    let statusColor = 'var(--green)';
-    let statusLabel = 'Active';
-    if (a.daysSince > 365) { statusColor = 'var(--red)'; statusLabel = 'Inactive 1y+'; }
-    else if (a.daysSince > 180) { statusColor = 'var(--orange)'; statusLabel = 'Inactive 6m+'; }
-    else if (a.daysSince > 90) { statusColor = 'var(--yellow, #eab308)'; statusLabel = 'Inactive 3m+'; }
+    let statusPill, statusClass;
+    if (a.daysSince > 365) { statusPill = 'Inactive 1y+'; statusClass = 'oa-pill-stale'; }
+    else if (a.daysSince > 180) { statusPill = 'Inactive 6m+'; statusClass = 'oa-pill-warn'; }
+    else if (a.daysSince > 90) { statusPill = 'Inactive 3m+'; statusClass = 'oa-pill-warn'; }
+    else { statusPill = 'Active'; statusClass = 'oa-pill-ok'; }
 
-    html += `<div class="card" style="margin-bottom:16px;">
-      <div class="oa-header" data-slug="${a.slug}" style="cursor:pointer;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-        <strong style="font-size:15px;color:var(--text)">${esc(a.name)}</strong>
-        <span class="badge" style="background:var(--purple);font-size:11px">${a.count} post${a.count !== 1 ? 's' : ''}</span>
-        <span style="font-size:11px;color:${statusColor};font-weight:600">${statusLabel}</span>
-        ${stalePosts > 0 ? `<span style="font-size:11px;color:var(--orange)">${stalePosts} stale</span>` : ''}
-        <span style="margin-left:auto;font-size:11px;color:var(--text2)">Last active: ${a.lastUpdated ? fmtD(a.lastUpdated) : 'Unknown'}</span>
-        <span class="oa-chevron" style="font-size:14px;color:var(--text2);transition:transform .2s">&#9660;</span>
+    html += `<div class="oa-card">
+      <div class="oa-card-head" data-slug="${a.slug}">
+        <span class="oa-name">${esc(a.name)}</span>
+        <span class="oa-pill oa-pill-count">${a.count} post${a.count !== 1 ? 's' : ''}</span>
+        <span class="oa-pill ${statusClass}">${statusPill}</span>
+        ${a.stale > 0 ? `<span class="oa-pill oa-pill-stale">${a.stale} stale</span>` : ''}
+        <span class="oa-meta">
+          <span class="oa-last-active">${a.lastUpdated ? fmtD(a.lastUpdated) : '—'}</span>
+          <span class="oa-chevron">&#9660;</span>
+        </span>
       </div>
-      ${stalePosts > 0 ? `<div style="margin-top:8px;height:4px;border-radius:2px;background:var(--surface2);overflow:hidden"><div style="width:${staleBar}%;height:100%;background:var(--orange);border-radius:2px"></div></div><div style="font-size:10px;color:var(--text2);margin-top:2px">${staleBar}% stale</div>` : ''}
-      <div class="oa-posts" data-for="${a.slug}" style="display:none;margin-top:12px;">
-        <div class="table-scroll">
-          <table><thead><tr>
-            <th>Title</th><th>Published</th><th>Last Updated</th><th>Age</th><th>Status</th><th>Tags</th>
-          </tr></thead><tbody>
-          ${sortedPosts.map(p => {
-            const d = p.u || p.d;
-            const age = d ? Math.floor((now - new Date(d)) / 86400000) : 9999;
-            let badge = 'badge-new'; let label = 'Fresh';
-            if (age > 365) { badge = ''; label = '🔴 Rewrite'; }
-            else if (age > 180) { badge = 'badge-updated'; label = '🟠 Review'; }
-            else { label = '🟢 OK'; }
-            const neverUpdated = !p.u || p.u === p.d;
-            return `<tr style="${age > 365 ? 'background:rgba(239,68,68,0.06)' : ''}">
-              <td><a href="https://www.vantagecircle.com/en/blog/${p.s}/" target="_blank" style="color:var(--accent2);text-decoration:none">${esc(p.t || p.s)}</a></td>
-              <td style="white-space:nowrap">${fmtD(p.d)}</td>
-              <td style="white-space:nowrap">${neverUpdated ? '<span style="color:var(--red)">Never</span>' : fmtD(p.u)}</td>
-              <td style="white-space:nowrap;font-size:12px">${age < 9999 ? age + 'd' : '—'}</td>
-              <td><span style="font-size:12px">${label}</span></td>
-              <td style="color:var(--text2);font-size:11px">${esc((p.tg || []).join(', '))}</td>
-            </tr>`;
-          }).join('')}
-          </tbody></table>
-        </div>
+      ${a.stale > 0 ? `<div class="oa-progress"><div class="oa-progress-fill" style="width:${stalePct}%;background:${barColor}"></div></div>` : ''}
+      <div class="oa-panel" data-for="${a.slug}">
+        <table><thead><tr>
+          <th style="text-align:left">Title</th><th>Published</th><th>Updated</th><th>Status</th>
+        </tr></thead><tbody>
+        ${sortedPosts.map(p => {
+          const d = p.u || p.d;
+          const age = d ? Math.floor((now - new Date(d)) / 86400000) : 9999;
+          let dotClass, label;
+          if (age > 365) { dotClass = 'oa-status-red'; label = 'Rewrite'; }
+          else if (age > 180) { dotClass = 'oa-status-orange'; label = 'Review'; }
+          else { dotClass = 'oa-status-green'; label = 'OK'; }
+          const neverUpdated = !p.u || p.u === p.d;
+          return `<tr${age > 365 ? ' style="background:rgba(239,68,68,0.04)"' : ''}>
+            <td style="text-align:left"><a href="https://www.vantagecircle.com/en/blog/${p.s}/" target="_blank" style="color:var(--accent2);text-decoration:none">${esc(p.t || p.s)}</a></td>
+            <td style="white-space:nowrap;text-align:center">${fmtD(p.d)}</td>
+            <td style="white-space:nowrap;text-align:center">${neverUpdated ? '<span style="color:var(--red)">Never</span>' : fmtD(p.u)}</td>
+            <td style="white-space:nowrap;text-align:center"><span class="oa-status ${dotClass}"></span>${label}</td>
+          </tr>`;
+        }).join('')}
+        </tbody></table>
       </div>
     </div>`;
   });
@@ -1269,18 +1295,26 @@ function renderOtherAuthors() {
   document.getElementById('otherAuthorsBody').innerHTML = html;
 
   // Accordion toggle
-  document.querySelectorAll('.oa-header').forEach(h => {
+  document.querySelectorAll('.oa-card-head').forEach(h => {
     h.addEventListener('click', () => {
       const slug = h.dataset.slug;
-      const panel = document.querySelector(`.oa-posts[data-for="${slug}"]`);
+      const panel = document.querySelector(`.oa-panel[data-for="${slug}"]`);
       const chevron = h.querySelector('.oa-chevron');
-      if (panel.style.display === 'none') { panel.style.display = 'block'; chevron.style.transform = 'rotate(180deg)'; }
-      else { panel.style.display = 'none'; chevron.style.transform = 'rotate(0deg)'; }
+      panel.classList.toggle('open');
+      chevron.classList.toggle('open');
     });
   });
 }
 document.getElementById('otherAuthorsSearch').addEventListener('input', renderOtherAuthors);
 document.getElementById('otherAuthorSort').addEventListener('change', renderOtherAuthors);
+document.getElementById('oaExpandAll').addEventListener('click', function() {
+  const panels = document.querySelectorAll('.oa-panel');
+  const chevrons = document.querySelectorAll('.oa-card-head .oa-chevron');
+  const allOpen = [...panels].every(p => p.classList.contains('open'));
+  panels.forEach(p => allOpen ? p.classList.remove('open') : p.classList.add('open'));
+  chevrons.forEach(c => allOpen ? c.classList.remove('open') : c.classList.add('open'));
+  this.textContent = allOpen ? 'Expand All' : 'Collapse All';
+});
 
 function renderPostsTable() {
   const f=getFiltered(),{from,to}=getDateRange(),search=(document.getElementById('postSearch').value||'').toLowerCase();
